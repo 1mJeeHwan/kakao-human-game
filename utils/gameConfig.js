@@ -32,8 +32,8 @@ const UPGRADE_TABLE = [
 const TITLE_CHANGE_CHANCE = 20;  // 20% 확률로 칭호 변경
 const JOB_CHANGE_CHANCE = 15;    // 15% 확률로 직업 변경
 
-// 판매 가격 기본 배수 (감소: 1000 → 500)
-const SELL_PRICE_MULTIPLIER = 500;
+// 판매 가격 기본 배수 (감소: 1000 → 300)
+const SELL_PRICE_MULTIPLIER = 300;
 
 /**
  * 성장 정보 가져오기
