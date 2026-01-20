@@ -73,7 +73,7 @@ function calculateUpgradeResult(level) {
 const DEATH_START_LEVEL = 7;
 
 /**
- * 판매 가격 계산 (사망 위험 레벨부터 2배 보상)
+ * 판매 가격 계산 (7강부터 2배씩 증가)
  * @param {number} level - 현재 레벨
  * @param {number} titleBonusRate - 칭호 보너스율 (0~1)
  * @param {number} jobBonusRate - 직업 보너스율 (0~0.6)
@@ -84,12 +84,16 @@ function getSellPrice(level, titleBonusRate, jobBonusRate) {
     return 0;
   }
 
-  // 기본가: 2^level * 100
-  let basePrice = Math.pow(2, level) * SELL_PRICE_MULTIPLIER;
+  let basePrice;
 
-  // 사망 확률 있는 레벨(3강+)부터 2배 보상
-  if (level >= DEATH_START_LEVEL) {
-    basePrice *= 2;
+  if (level < DEATH_START_LEVEL) {
+    // 1~6강: 기본 증가 (2^level * 100)
+    basePrice = Math.pow(2, level) * SELL_PRICE_MULTIPLIER;
+  } else {
+    // 7강+: 2배씩 가속 증가
+    // 레벨 7부터는 기존 대비 2^(level-6)배 추가
+    const riskMultiplier = Math.pow(2, level - DEATH_START_LEVEL + 1);
+    basePrice = Math.pow(2, level) * SELL_PRICE_MULTIPLIER * riskMultiplier;
   }
 
   const totalBonus = titleBonusRate + jobBonusRate;
