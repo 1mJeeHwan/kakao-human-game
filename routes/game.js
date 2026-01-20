@@ -9,8 +9,6 @@ const {
   startGame,
   upgradeHuman,
   sellHuman,
-  rerollTitle,
-  rerollJob,
   getRates
 } = require('../controllers/gameController');
 
@@ -22,12 +20,6 @@ router.post('/upgrade', upgradeHuman);
 
 // 인간 판매
 router.post('/sell', sellHuman);
-
-// 칭호 리롤
-router.post('/reroll/title', rerollTitle);
-
-// 직업 리롤
-router.post('/reroll/job', rerollJob);
 
 // 확률표 조회
 router.post('/rates', getRates);

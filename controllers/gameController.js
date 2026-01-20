@@ -9,11 +9,13 @@ const {
   getUpgradeInfo,
   calculateUpgradeResult,
   getSellPrice,
-  getTitleRerollCost,
-  getJobRerollCost,
+  shouldChangeTitle,
+  shouldChangeJob,
   formatGold,
   UPGRADE_TABLE,
-  MAX_LEVEL
+  MAX_LEVEL,
+  TITLE_CHANGE_CHANCE,
+  JOB_CHANGE_CHANCE
 } = require('../utils/gameConfig');
 const {
   getHumanFullName,
@@ -22,7 +24,6 @@ const {
   DEFAULT_QUICK_REPLIES,
   UPGRADE_QUICK_REPLIES,
   SELL_QUICK_REPLIES,
-  REROLL_QUICK_REPLIES,
   extractUserId,
   getGradeEmoji
 } = require('../utils/helpers');
@@ -129,6 +130,24 @@ async function upgradeHuman(req, res) {
 
     if (result === 'success') {
       user.levelUp();
+
+      // 랜덤 칭호/직업 변경 체크
+      let changeText = '';
+
+      if (shouldChangeTitle()) {
+        const { oldTitle, newTitle } = user.rerollTitle();
+        const newGradeKorean = TITLE_GRADE_KOREAN[newTitle.grade];
+        const newBonus = Math.round(newTitle.bonusRate * 100);
+        changeText += `\n\n🎲 칭호가 변경되었습니다!\n${oldTitle} → ${newTitle.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newTitle.grade)}`;
+      }
+
+      if (shouldChangeJob()) {
+        const { oldJob, newJob } = user.rerollJob();
+        const newGradeKorean = JOB_GRADE_KOREAN[newJob.grade];
+        const newBonus = Math.round(newJob.bonusRate * 100);
+        changeText += `\n\n🎲 직업이 변경되었습니다!\n${oldJob} → ${newJob.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newJob.grade)}`;
+      }
+
       const newName = getHumanFullName(user.human);
       const sellPrice = getSellPrice(user.human.level, user.human.title.bonusRate, user.human.job.bonusRate);
 
@@ -153,7 +172,7 @@ async function upgradeHuman(req, res) {
 
 💰 사용: ${formatGold(upgradeInfo.cost)}
 💰 남은 골드: ${formatGold(user.gold)}
-💵 현재 판매가: ${formatGold(sellPrice)}${nextInfoText}`;
+💵 현재 판매가: ${formatGold(sellPrice)}${changeText}${nextInfoText}`;
 
       await user.save();
       const successImage = getJobImage(user.human.job.name, user.human.job.grade);
@@ -274,119 +293,6 @@ ${soldHumanName}
 }
 
 /**
- * 칭호 리롤
- */
-async function rerollTitle(req, res) {
-  try {
-    const userId = extractUserId(req.body);
-
-    if (!userId) {
-      return res.json(createKakaoResponse('유저 정보를 찾을 수 없습니다.'));
-    }
-
-    const user = await User.findOrCreate(userId);
-    const cost = getTitleRerollCost(user.human.level);
-
-    // 골드 부족 체크
-    if (user.gold < cost) {
-      const text = `❌ 골드가 부족합니다!
-
-칭호 변경 비용: ${formatGold(cost)}
-보유: ${formatGold(user.gold)}`;
-
-      return res.json(createKakaoResponse(text, REROLL_QUICK_REPLIES));
-    }
-
-    // 골드 차감
-    user.gold -= cost;
-    user.stats.totalGoldSpent += cost;
-
-    // 리롤
-    const { oldTitle, newTitle } = user.rerollTitle();
-
-    const oldBonus = Math.round((TITLE_GRADE_KOREAN[oldTitle] ? 0 : oldTitle.bonusRate || 0) * 100);
-    const newBonus = Math.round(newTitle.bonusRate * 100);
-    const newGradeKorean = TITLE_GRADE_KOREAN[newTitle.grade];
-
-    const humanName = getHumanFullName(user.human);
-
-    const text = `🎲 칭호 변경!
-
-이전: ${oldTitle}
-현재: ${newTitle.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newTitle.grade)}
-
-💰 사용: ${formatGold(cost)}
-💰 남은: ${formatGold(user.gold)}
-
-👤 ${humanName}`;
-
-    await user.save();
-    const rerollImage = getJobImage(user.human.job.name, user.human.job.grade);
-    return res.json(createKakaoMixedResponse(text, rerollImage, REROLL_QUICK_REPLIES));
-
-  } catch (error) {
-    console.error('rerollTitle 오류:', error);
-    return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
-  }
-}
-
-/**
- * 직업 리롤
- */
-async function rerollJob(req, res) {
-  try {
-    const userId = extractUserId(req.body);
-
-    if (!userId) {
-      return res.json(createKakaoResponse('유저 정보를 찾을 수 없습니다.'));
-    }
-
-    const user = await User.findOrCreate(userId);
-    const cost = getJobRerollCost(user.human.level);
-
-    // 골드 부족 체크
-    if (user.gold < cost) {
-      const text = `❌ 골드가 부족합니다!
-
-직업 변경 비용: ${formatGold(cost)}
-보유: ${formatGold(user.gold)}`;
-
-      return res.json(createKakaoResponse(text, REROLL_QUICK_REPLIES));
-    }
-
-    // 골드 차감
-    user.gold -= cost;
-    user.stats.totalGoldSpent += cost;
-
-    // 리롤
-    const { oldJob, newJob } = user.rerollJob();
-
-    const newBonus = Math.round(newJob.bonusRate * 100);
-    const newGradeKorean = JOB_GRADE_KOREAN[newJob.grade];
-
-    const humanName = getHumanFullName(user.human);
-
-    const text = `🎲 직업 변경!
-
-이전: ${oldJob}
-현재: ${newJob.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newJob.grade)}
-
-💰 사용: ${formatGold(cost)}
-💰 남은: ${formatGold(user.gold)}
-
-👤 ${humanName}`;
-
-    await user.save();
-    const rerollImage = getJobImage(user.human.job.name, user.human.job.grade);
-    return res.json(createKakaoMixedResponse(text, rerollImage, REROLL_QUICK_REPLIES));
-
-  } catch (error) {
-    console.error('rerollJob 오류:', error);
-    return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
-  }
-}
-
-/**
  * 확률표 조회
  */
 async function getRates(req, res) {
@@ -400,20 +306,25 @@ async function getRates(req, res) {
 
     const text = `${upgradeRatesText}
 
-🏷️ 칭호 확률
+🎲 강화 성공 시 변이
 ━━━━━━━━━━━━━━
-일반: 40% (평범한, 순수한...)
-고급: 30% (부지런한, 성실한...)
-희귀: 20% (용맹한, 천재적인...)
-영웅: 8% (위대한, 고귀한...)
-전설: 2% (전설의, 신화적인...)
+칭호 변경: ${TITLE_CHANGE_CHANCE}%
+직업 변경: ${JOB_CHANGE_CHANCE}%
 
-💼 직업 확률
+🏷️ 칭호 등급
 ━━━━━━━━━━━━━━
-일반: 50% (회사원, 백수...)
-고급: 30% (요리사, 개발자...)
-희귀: 15% (의사, 마법사...)
-전설: 5% (용사, 연금술사...)`;
+일반: 40% (+0%)
+고급: 30% (+10%)
+희귀: 20% (+25%)
+영웅: 8% (+50%)
+전설: 2% (+100%)
+
+💼 직업 등급
+━━━━━━━━━━━━━━
+일반: 50% (+0%)
+고급: 30% (+15%)
+희귀: 15% (+30%)
+전설: 5% (+60%)`;
 
     return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
 
@@ -427,7 +338,5 @@ module.exports = {
   startGame,
   upgradeHuman,
   sellHuman,
-  rerollTitle,
-  rerollJob,
   getRates
 };

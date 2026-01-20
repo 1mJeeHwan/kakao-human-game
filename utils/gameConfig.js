@@ -28,12 +28,9 @@ const UPGRADE_TABLE = [
   { level: 14, success: 3, death: 70, fail: 27, cost: 200000 }
 ];
 
-// 리롤 비용 계산
-const TITLE_REROLL_BASE_COST = 3000;
-const TITLE_REROLL_LEVEL_COST = 500;
-
-const JOB_REROLL_BASE_COST = 5000;
-const JOB_REROLL_LEVEL_COST = 1000;
+// 강화 성공 시 칭호/직업 변경 확률 (%)
+const TITLE_CHANGE_CHANCE = 20;  // 20% 확률로 칭호 변경
+const JOB_CHANGE_CHANCE = 15;    // 15% 확률로 직업 변경
 
 /**
  * 강화 정보 가져오기
@@ -88,21 +85,19 @@ function getSellPrice(level, titleBonusRate, jobBonusRate) {
 }
 
 /**
- * 칭호 리롤 비용 계산
- * @param {number} level - 현재 레벨
- * @returns {number} 리롤 비용
+ * 칭호 변경 여부 결정
+ * @returns {boolean} 변경 여부
  */
-function getTitleRerollCost(level) {
-  return TITLE_REROLL_BASE_COST + (level * TITLE_REROLL_LEVEL_COST);
+function shouldChangeTitle() {
+  return Math.random() * 100 < TITLE_CHANGE_CHANCE;
 }
 
 /**
- * 직업 리롤 비용 계산
- * @param {number} level - 현재 레벨
- * @returns {number} 리롤 비용
+ * 직업 변경 여부 결정
+ * @returns {boolean} 변경 여부
  */
-function getJobRerollCost(level) {
-  return JOB_REROLL_BASE_COST + (level * JOB_REROLL_LEVEL_COST);
+function shouldChangeJob() {
+  return Math.random() * 100 < JOB_CHANGE_CHANCE;
 }
 
 /**
@@ -118,10 +113,12 @@ module.exports = {
   INITIAL_GOLD,
   MAX_LEVEL,
   UPGRADE_TABLE,
+  TITLE_CHANGE_CHANCE,
+  JOB_CHANGE_CHANCE,
   getUpgradeInfo,
   calculateUpgradeResult,
   getSellPrice,
-  getTitleRerollCost,
-  getJobRerollCost,
+  shouldChangeTitle,
+  shouldChangeJob,
   formatGold
 };
