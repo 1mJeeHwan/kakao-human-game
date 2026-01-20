@@ -4,6 +4,7 @@
 
 const { getFullJobName } = require('./jobs');
 const { formatGold } = require('./gameConfig');
+const { getJobImage, getStatusImage } = require('./images');
 
 /**
  * 캐릭터 전체 이름 생성
@@ -116,9 +117,85 @@ function getGradeEmoji(grade) {
   return emojis[grade] || '';
 }
 
+/**
+ * 이미지가 포함된 카카오 응답 (basicCard)
+ * @param {string} title - 카드 제목
+ * @param {string} description - 카드 설명
+ * @param {string} imageUrl - 이미지 URL
+ * @param {Array} quickReplies - 빠른 응답 버튼 배열
+ * @returns {Object} 카카오 응답 객체
+ */
+function createKakaoCardResponse(title, description, imageUrl, quickReplies = []) {
+  const response = {
+    version: '2.0',
+    template: {
+      outputs: [
+        {
+          basicCard: {
+            title: title,
+            description: description,
+            thumbnail: {
+              imageUrl: imageUrl
+            }
+          }
+        }
+      ]
+    }
+  };
+
+  if (quickReplies.length > 0) {
+    response.template.quickReplies = quickReplies;
+  }
+
+  return response;
+}
+
+/**
+ * 텍스트 + 이미지 혼합 응답
+ * @param {string} text - 텍스트 내용
+ * @param {string} imageUrl - 이미지 URL (선택)
+ * @param {Array} quickReplies - 빠른 응답 버튼 배열
+ * @returns {Object} 카카오 응답 객체
+ */
+function createKakaoMixedResponse(text, imageUrl, quickReplies = []) {
+  const outputs = [];
+
+  // 이미지가 있으면 먼저 추가
+  if (imageUrl) {
+    outputs.push({
+      simpleImage: {
+        imageUrl: imageUrl,
+        altText: '게임 이미지'
+      }
+    });
+  }
+
+  // 텍스트 추가
+  outputs.push({
+    simpleText: {
+      text: text
+    }
+  });
+
+  const response = {
+    version: '2.0',
+    template: {
+      outputs: outputs
+    }
+  };
+
+  if (quickReplies.length > 0) {
+    response.template.quickReplies = quickReplies;
+  }
+
+  return response;
+}
+
 module.exports = {
   getHumanFullName,
   createKakaoResponse,
+  createKakaoCardResponse,
+  createKakaoMixedResponse,
   createQuickReply,
   DEFAULT_QUICK_REPLIES,
   UPGRADE_QUICK_REPLIES,

@@ -18,6 +18,7 @@ const {
 const {
   getHumanFullName,
   createKakaoResponse,
+  createKakaoMixedResponse,
   DEFAULT_QUICK_REPLIES,
   UPGRADE_QUICK_REPLIES,
   SELL_QUICK_REPLIES,
@@ -25,6 +26,7 @@ const {
   extractUserId,
   getGradeEmoji
 } = require('../utils/helpers');
+const { getJobImage, getStatusImage } = require('../utils/images');
 
 /**
  * 게임 시작 / 상태 조회
@@ -64,7 +66,8 @@ async function startGame(req, res) {
 - 총 시도: ${user.stats.totalAttempts}회
 - 사망 횟수: ${user.stats.deathCount}회`;
 
-    return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
+    const imageUrl = getJobImage(human.job.name, human.job.grade);
+    return res.json(createKakaoMixedResponse(text, imageUrl, DEFAULT_QUICK_REPLIES));
 
   } catch (error) {
     console.error('startGame 오류:', error);
@@ -152,6 +155,10 @@ async function upgradeHuman(req, res) {
 💰 남은 골드: ${formatGold(user.gold)}
 💵 현재 판매가: ${formatGold(sellPrice)}${nextInfoText}`;
 
+      await user.save();
+      const successImage = getJobImage(user.human.job.name, user.human.job.grade);
+      return res.json(createKakaoMixedResponse(text, successImage, UPGRADE_QUICK_REPLIES));
+
     } else if (result === 'death') {
       const oldHumanName = previousName;
       user.handleDeath();
@@ -167,6 +174,10 @@ async function upgradeHuman(req, res) {
 💰 남은 골드: ${formatGold(user.gold)}
 
 😢 다음에는 더 좋은 인간이 오길...`;
+
+      await user.save();
+      const deathImage = getStatusImage('death');
+      return res.json(createKakaoMixedResponse(text, deathImage, UPGRADE_QUICK_REPLIES));
 
     } else {
       // 실패 (유지)
@@ -185,10 +196,11 @@ async function upgradeHuman(req, res) {
 - 비용: ${formatGold(upgradeInfo.cost)}
 - 성공: ${upgradeInfo.success}%
 - 사망: ${upgradeInfo.death}%`;
-    }
 
-    await user.save();
-    return res.json(createKakaoResponse(text, UPGRADE_QUICK_REPLIES));
+      await user.save();
+      const failImage = getStatusImage('fail');
+      return res.json(createKakaoMixedResponse(text, failImage, UPGRADE_QUICK_REPLIES));
+    }
 
   } catch (error) {
     console.error('upgradeHuman 오류:', error);
@@ -252,7 +264,8 @@ ${soldHumanName}
 🏷️ ${newHumanName}`;
 
     await user.save();
-    return res.json(createKakaoResponse(text, SELL_QUICK_REPLIES));
+    const sellImage = getStatusImage('sell');
+    return res.json(createKakaoMixedResponse(text, sellImage, SELL_QUICK_REPLIES));
 
   } catch (error) {
     console.error('sellHuman 오류:', error);
@@ -308,7 +321,8 @@ async function rerollTitle(req, res) {
 👤 ${humanName}`;
 
     await user.save();
-    return res.json(createKakaoResponse(text, REROLL_QUICK_REPLIES));
+    const rerollImage = getJobImage(user.human.job.name, user.human.job.grade);
+    return res.json(createKakaoMixedResponse(text, rerollImage, REROLL_QUICK_REPLIES));
 
   } catch (error) {
     console.error('rerollTitle 오류:', error);
@@ -363,7 +377,8 @@ async function rerollJob(req, res) {
 👤 ${humanName}`;
 
     await user.save();
-    return res.json(createKakaoResponse(text, REROLL_QUICK_REPLIES));
+    const rerollImage = getJobImage(user.human.job.name, user.human.job.grade);
+    return res.json(createKakaoMixedResponse(text, rerollImage, REROLL_QUICK_REPLIES));
 
   } catch (error) {
     console.error('rerollJob 오류:', error);
