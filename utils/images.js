@@ -1,6 +1,7 @@
 /**
  * 이미지 URL 관리
  * DiceBear API로 픽셀 아트 스타일 아바타 생성
+ * 레벨과 등급에 따라 더 화려한 이미지 생성
  */
 
 // DiceBear 픽셀 아트 스타일 (무료, URL만으로 생성)
@@ -62,46 +63,121 @@ const STATUS_SEEDS = {
   reroll: 'reroll_dice_random'
 };
 
-// 등급별 배경색 (DiceBear 파라미터)
+// 등급별 배경색 (기본)
 const GRADE_BACKGROUNDS = {
-  common: 'b0b0b0',      // 회색
-  uncommon: '2ecc71',    // 초록
-  rare: '3498db',        // 파랑
-  epic: '9b59b6',        // 보라
-  legendary: 'f39c12'    // 금색
+  common: 'b6b6b6',      // 회색
+  uncommon: '4ade80',    // 초록
+  rare: '60a5fa',        // 파랑
+  epic: 'c084fc',        // 보라
+  legendary: 'fbbf24'    // 금색
+};
+
+// 레벨별 배경 그라데이션 효과 (레벨이 높을수록 화려함)
+const LEVEL_EFFECTS = {
+  low: { scale: 100, radius: 0 },      // 0-4
+  mid: { scale: 110, radius: 10 },     // 5-9
+  high: { scale: 120, radius: 20 },    // 10-12
+  max: { scale: 130, radius: 30 }      // 13-15
+};
+
+// 칭호 등급별 추가 효과
+const TITLE_GRADE_EFFECTS = {
+  common: '',
+  uncommon: '&accessories=variant01',
+  rare: '&accessories=variant02&accessoriesProbability=100',
+  epic: '&accessories=variant03&accessoriesProbability=100',
+  legendary: '&accessories=variant04&accessoriesProbability=100'
 };
 
 /**
- * 직업 이미지 URL 생성
+ * 레벨에 따른 효과 가져오기
+ */
+function getLevelEffect(level) {
+  if (level >= 13) return LEVEL_EFFECTS.max;
+  if (level >= 10) return LEVEL_EFFECTS.high;
+  if (level >= 5) return LEVEL_EFFECTS.mid;
+  return LEVEL_EFFECTS.low;
+}
+
+/**
+ * 레벨에 따른 배경색 조정 (높을수록 더 진하고 화려함)
+ */
+function getEnhancedBackground(baseColor, level) {
+  // 레벨에 따라 배경색 변형
+  if (level >= 13) {
+    // 최고 레벨: 금빛 테두리 효과
+    return 'ffd700';
+  } else if (level >= 10) {
+    // 높은 레벨: 더 진한 색상
+    return baseColor;
+  } else if (level >= 5) {
+    // 중간 레벨: 약간 밝게
+    return baseColor;
+  }
+  return baseColor;
+}
+
+/**
+ * 직업 이미지 URL 생성 (레벨과 등급 반영)
  * @param {string} jobName - 직업 이름
- * @param {string} grade - 등급 (optional)
+ * @param {string} jobGrade - 직업 등급
+ * @param {number} level - 현재 레벨
+ * @param {string} titleGrade - 칭호 등급
  * @returns {string} 이미지 URL
  */
-function getJobImage(jobName, grade = 'common') {
+function getJobImage(jobName, jobGrade = 'common', level = 0, titleGrade = 'common') {
   const seed = JOB_SEEDS[jobName] || jobName;
-  const bgColor = GRADE_BACKGROUNDS[grade] || GRADE_BACKGROUNDS.common;
-  return `${DICEBEAR_BASE}?seed=${encodeURIComponent(seed)}&backgroundColor=${bgColor}&size=256`;
+  const baseBgColor = GRADE_BACKGROUNDS[jobGrade] || GRADE_BACKGROUNDS.common;
+  const bgColor = getEnhancedBackground(baseBgColor, level);
+  const levelEffect = getLevelEffect(level);
+  const titleEffect = TITLE_GRADE_EFFECTS[titleGrade] || '';
+
+  // 레벨에 따른 시드 변형 (레벨이 붙으면 약간 다른 이미지)
+  const enhancedSeed = `${seed}_lv${level}`;
+
+  let url = `${DICEBEAR_BASE}?seed=${encodeURIComponent(enhancedSeed)}`;
+  url += `&backgroundColor=${bgColor}`;
+  url += `&scale=${levelEffect.scale}`;
+  url += `&size=256`;
+
+  // 높은 레벨은 둥근 모서리
+  if (levelEffect.radius > 0) {
+    url += `&radius=${levelEffect.radius}`;
+  }
+
+  // 칭호 등급에 따른 악세사리
+  url += titleEffect;
+
+  return url;
 }
 
 /**
  * 상태 이미지 URL 생성
  * @param {string} status - 상태 (success, fail, death, sell, reroll)
+ * @param {number} level - 현재 레벨 (성공 시 더 화려하게)
  * @returns {string} 이미지 URL
  */
-function getStatusImage(status) {
+function getStatusImage(status, level = 0) {
   const seed = STATUS_SEEDS[status] || status;
 
   // 상태별 배경색
   const bgColors = {
-    success: '2ecc71',
-    fail: 'e74c3c',
-    death: '2c3e50',
-    sell: 'f39c12',
-    reroll: '9b59b6'
+    success: level >= 10 ? 'ffd700' : (level >= 5 ? '22c55e' : '4ade80'),
+    fail: 'ef4444',
+    death: '1f2937',
+    sell: level >= 10 ? 'ffd700' : 'f59e0b',
+    reroll: 'a855f7'
   };
 
   const bgColor = bgColors[status] || 'cccccc';
-  return `${DICEBEAR_BASE}?seed=${encodeURIComponent(seed)}&backgroundColor=${bgColor}&size=256`;
+  const levelEffect = getLevelEffect(level);
+
+  let url = `${DICEBEAR_BASE}?seed=${encodeURIComponent(seed)}_${level}`;
+  url += `&backgroundColor=${bgColor}`;
+  url += `&scale=${levelEffect.scale}`;
+  url += `&size=256`;
+
+  return url;
 }
 
 /**
@@ -112,10 +188,10 @@ function getStatusImage(status) {
 function getGradeColor(grade) {
   const colors = {
     common: '#808080',
-    uncommon: '#2ecc71',
-    rare: '#3498db',
-    epic: '#9b59b6',
-    legendary: '#f39c12'
+    uncommon: '#22c55e',
+    rare: '#3b82f6',
+    epic: '#a855f7',
+    legendary: '#f59e0b'
   };
   return colors[grade] || colors.common;
 }

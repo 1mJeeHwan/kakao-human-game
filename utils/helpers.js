@@ -61,19 +61,19 @@ function createQuickReply(label, message) {
  * 기본 빠른 응답 버튼들
  */
 const DEFAULT_QUICK_REPLIES = [
-  createQuickReply('업그레이드', '업그레이드'),
+  createQuickReply('성장하기', '성장'),
   createQuickReply('판매하기', '판매'),
   createQuickReply('확률표', '확률')
 ];
 
 const UPGRADE_QUICK_REPLIES = [
-  createQuickReply('계속 업그레이드', '업그레이드'),
+  createQuickReply('계속 성장', '성장'),
   createQuickReply('판매하기', '판매'),
   createQuickReply('상태 확인', '시작')
 ];
 
 const SELL_QUICK_REPLIES = [
-  createQuickReply('강화하기', '강화'),
+  createQuickReply('성장하기', '성장'),
   createQuickReply('상태 확인', '시작'),
   createQuickReply('확률표', '확률')
 ];

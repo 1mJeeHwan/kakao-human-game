@@ -15,7 +15,8 @@ const {
   UPGRADE_TABLE,
   MAX_LEVEL,
   TITLE_CHANGE_CHANCE,
-  JOB_CHANGE_CHANCE
+  JOB_CHANGE_CHANCE,
+  SELL_PRICE_MULTIPLIER
 } = require('../utils/gameConfig');
 const {
   getHumanFullName,
@@ -67,7 +68,7 @@ async function startGame(req, res) {
 - 총 시도: ${user.stats.totalAttempts}회
 - 사망 횟수: ${user.stats.deathCount}회`;
 
-    const imageUrl = getJobImage(human.job.name, human.job.grade);
+    const imageUrl = getJobImage(human.job.name, human.job.grade, human.level, human.title.grade);
     return res.json(createKakaoMixedResponse(text, imageUrl, DEFAULT_QUICK_REPLIES));
 
   } catch (error) {
@@ -77,7 +78,7 @@ async function startGame(req, res) {
 }
 
 /**
- * 인간 강화
+ * 인간 성장
  */
 async function upgradeHuman(req, res) {
   try {
@@ -96,7 +97,7 @@ async function upgradeHuman(req, res) {
 
 👤 ${getHumanFullName(human)}
 
-더 이상 강화할 수 없습니다.
+더 이상 성장할 수 없습니다.
 판매하여 새로운 인간을 만나보세요!`;
 
       return res.json(createKakaoResponse(text, UPGRADE_QUICK_REPLIES));
@@ -121,7 +122,7 @@ async function upgradeHuman(req, res) {
     user.stats.totalAttempts += 1;
     user.stats.totalGoldSpent += upgradeInfo.cost;
 
-    // 강화 결과 계산
+    // 성장 결과 계산
     const result = calculateUpgradeResult(human.level);
     const previousLevel = human.level;
     const previousName = getHumanFullName(human);
@@ -151,14 +152,14 @@ async function upgradeHuman(req, res) {
       const newName = getHumanFullName(user.human);
       const sellPrice = getSellPrice(user.human.level, user.human.title.bonusRate, user.human.job.bonusRate);
 
-      // 다음 강화 정보
+      // 다음 성장 정보
       const nextInfo = getUpgradeInfo(user.human.level);
       let nextInfoText = '';
 
       if (nextInfo) {
         nextInfoText = `
 
-📈 다음 강화
+📈 다음 성장
 - 비용: ${formatGold(nextInfo.cost)}
 - 성공: ${nextInfo.success}%
 - 사망: ${nextInfo.death}%`;
@@ -166,7 +167,7 @@ async function upgradeHuman(req, res) {
         nextInfoText = '\n\n🎉 최대 레벨 달성!';
       }
 
-      text = `✨ 강화 성공! ✨
+      text = `✨ 성장 성공! ✨
 
 👤 ${newName}
 
@@ -175,7 +176,7 @@ async function upgradeHuman(req, res) {
 💵 현재 판매가: ${formatGold(sellPrice)}${changeText}${nextInfoText}`;
 
       await user.save();
-      const successImage = getJobImage(user.human.job.name, user.human.job.grade);
+      const successImage = getJobImage(user.human.job.name, user.human.job.grade, user.human.level, user.human.title.grade);
       return res.json(createKakaoMixedResponse(text, successImage, UPGRADE_QUICK_REPLIES));
 
     } else if (result === 'death') {
@@ -195,7 +196,7 @@ async function upgradeHuman(req, res) {
 😢 다음에는 더 좋은 인간이 오길...`;
 
       await user.save();
-      const deathImage = getStatusImage('death');
+      const deathImage = getStatusImage('death', previousLevel);
       return res.json(createKakaoMixedResponse(text, deathImage, UPGRADE_QUICK_REPLIES));
 
     } else {
@@ -203,7 +204,7 @@ async function upgradeHuman(req, res) {
       user.stats.failCount += 1;
       const sellPrice = getSellPrice(human.level, human.title.bonusRate, human.job.bonusRate);
 
-      text = `❌ 강화 실패!
+      text = `❌ 성장 실패!
 
 👤 ${getHumanFullName(human)} (유지)
 
@@ -211,13 +212,13 @@ async function upgradeHuman(req, res) {
 💰 남은 골드: ${formatGold(user.gold)}
 💵 현재 판매가: ${formatGold(sellPrice)}
 
-📈 다음 강화
+📈 다음 성장
 - 비용: ${formatGold(upgradeInfo.cost)}
 - 성공: ${upgradeInfo.success}%
 - 사망: ${upgradeInfo.death}%`;
 
       await user.save();
-      const failImage = getStatusImage('fail');
+      const failImage = getStatusImage('fail', human.level);
       return res.json(createKakaoMixedResponse(text, failImage, UPGRADE_QUICK_REPLIES));
     }
 
@@ -245,13 +246,13 @@ async function sellHuman(req, res) {
     if (human.level === 0) {
       const text = `❌ +0 인간은 판매할 수 없습니다!
 
-💡 최소 +1 이상 강화해야 판매할 수 있습니다.`;
+💡 최소 +1 이상 성장해야 판매할 수 있습니다.`;
 
       return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
     }
 
     const sellPrice = getSellPrice(human.level, human.title.bonusRate, human.job.bonusRate);
-    const basePrice = Math.pow(2, human.level) * 1000;
+    const basePrice = Math.pow(2, human.level) * SELL_PRICE_MULTIPLIER;
     const titleBonus = Math.round(human.title.bonusRate * 100);
     const jobBonus = Math.round(human.job.bonusRate * 100);
 
@@ -282,8 +283,9 @@ ${soldHumanName}
 👤 새로운 인간이 도착!
 🏷️ ${newHumanName}`;
 
+    const soldLevel = human.level;
     await user.save();
-    const sellImage = getStatusImage('sell');
+    const sellImage = getStatusImage('sell', soldLevel);
     return res.json(createKakaoMixedResponse(text, sellImage, SELL_QUICK_REPLIES));
 
   } catch (error) {
@@ -297,8 +299,8 @@ ${soldHumanName}
  */
 async function getRates(req, res) {
   try {
-    // 강화 확률표 생성
-    let upgradeRatesText = '📊 강화 확률표\n━━━━━━━━━━━━━━';
+    // 성장 확률표 생성
+    let upgradeRatesText = '📊 성장 확률표\n━━━━━━━━━━━━━━';
 
     for (const info of UPGRADE_TABLE) {
       upgradeRatesText += `\n+${info.level}→+${info.level + 1}: ${info.success}% (사망 ${info.death}%) ${formatGold(info.cost)}`;
@@ -306,7 +308,7 @@ async function getRates(req, res) {
 
     const text = `${upgradeRatesText}
 
-🎲 강화 성공 시 변이
+🎲 성장 성공 시 변이
 ━━━━━━━━━━━━━━
 칭호 변경: ${TITLE_CHANGE_CHANCE}%
 직업 변경: ${JOB_CHANGE_CHANCE}%
