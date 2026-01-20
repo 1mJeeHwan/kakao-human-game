@@ -69,8 +69,11 @@ function calculateUpgradeResult(level) {
   }
 }
 
+// 사망 확률 급증 레벨 (2배 보상 시작)
+const DEATH_START_LEVEL = 7;
+
 /**
- * 판매 가격 계산 (감소된 보상)
+ * 판매 가격 계산 (사망 위험 레벨부터 2배 보상)
  * @param {number} level - 현재 레벨
  * @param {number} titleBonusRate - 칭호 보너스율 (0~1)
  * @param {number} jobBonusRate - 직업 보너스율 (0~0.6)
@@ -81,10 +84,15 @@ function getSellPrice(level, titleBonusRate, jobBonusRate) {
     return 0;
   }
 
-  // 기본가 감소: 2^level * 500 (기존 1000에서 감소)
-  const basePrice = Math.pow(2, level) * SELL_PRICE_MULTIPLIER;
-  const totalBonus = titleBonusRate + jobBonusRate;
+  // 기본가: 2^level * 100
+  let basePrice = Math.pow(2, level) * SELL_PRICE_MULTIPLIER;
 
+  // 사망 확률 있는 레벨(3강+)부터 2배 보상
+  if (level >= DEATH_START_LEVEL) {
+    basePrice *= 2;
+  }
+
+  const totalBonus = titleBonusRate + jobBonusRate;
   return Math.floor(basePrice * (1 + totalBonus));
 }
 
