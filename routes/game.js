@@ -44,6 +44,275 @@ router.post('/stats', getStats);
 // 도움말 (챗봇)
 router.post('/help', getHelp);
 
+// 게임 정보 웹페이지 (GET) - 비용표, 칭호표, 직업표
+router.get('/info', (req, res) => {
+  const { UPGRADE_TABLE } = require('../utils/gameConfig');
+  const { TITLES, TITLE_GRADES } = require('../utils/titles');
+  const { JOBS, JOB_GRADES } = require('../utils/jobs');
+
+  // 판매가 계산 함수
+  const getSellPrice = (level) => {
+    if (level === 0) return 0;
+    const SELL_PRICE_MULTIPLIER = 100;
+    const DEATH_START_LEVEL = 7;
+    if (level < DEATH_START_LEVEL) {
+      return Math.pow(2, level) * SELL_PRICE_MULTIPLIER;
+    } else {
+      const riskMultiplier = Math.pow(2, level - DEATH_START_LEVEL + 1);
+      return Math.pow(2, level) * SELL_PRICE_MULTIPLIER * riskMultiplier;
+    }
+  };
+
+  // 숫자 포맷
+  const formatNum = (n) => n.toLocaleString('ko-KR');
+
+  // 성장 테이블 HTML
+  let upgradeRows = '';
+  for (const info of UPGRADE_TABLE) {
+    const sellPrice = getSellPrice(info.level + 1);
+    const ratio = ((info.cost / sellPrice) * 100).toFixed(1);
+    upgradeRows += \`
+      <tr class="\${info.level >= 10 ? 'danger' : info.level >= 5 ? 'warning' : ''}">
+        <td>\${info.level}→\${info.level + 1}</td>
+        <td class="success">\${info.success}%</td>
+        <td>\${info.fail}%</td>
+        <td class="death">\${info.death}%</td>
+        <td>\${formatNum(info.cost)}G</td>
+        <td>\${formatNum(sellPrice)}G</td>
+        <td>\${ratio}%</td>
+      </tr>
+    \`;
+  }
+
+  // 칭호 테이블 HTML
+  const gradeOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+  const gradeKorean = { common: '일반', uncommon: '고급', rare: '희귀', epic: '영웅', legendary: '전설' };
+  const gradeColors = { common: '#808080', uncommon: '#22c55e', rare: '#3b82f6', epic: '#a855f7', legendary: '#f59e0b' };
+
+  let titleRows = '';
+  for (const grade of gradeOrder) {
+    const titlesOfGrade = TITLES.filter(t => t.grade === grade);
+    const bonus = titlesOfGrade[0]?.bonusRate * 100 || 0;
+    titleRows += \`
+      <tr>
+        <td><span class="grade-badge" style="background:\${gradeColors[grade]}">\${gradeKorean[grade]}</span></td>
+        <td>+\${bonus}%</td>
+        <td>\${titlesOfGrade.length}개</td>
+        <td class="title-list">\${titlesOfGrade.map(t => t.name).join(', ')}</td>
+      </tr>
+    \`;
+  }
+
+  // 직업 테이블 HTML
+  let jobRows = '';
+  for (const grade of ['common', 'uncommon', 'rare', 'legendary']) {
+    const jobsOfGrade = JOBS.filter(j => j.grade === grade);
+    const bonus = jobsOfGrade[0]?.bonusRate * 100 || 0;
+    jobRows += \`
+      <tr>
+        <td><span class="grade-badge" style="background:\${gradeColors[grade]}">\${gradeKorean[grade]}</span></td>
+        <td>+\${bonus}%</td>
+        <td>\${jobsOfGrade.length}개</td>
+        <td class="title-list">\${jobsOfGrade.map(j => j.name).join(', ')}</td>
+      </tr>
+    \`;
+  }
+
+  const html = \`
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>인간 키우기 - 게임 정보</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #fff;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 30px; font-size: 28px; }
+    h2 { margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; }
+    .card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    th { background: rgba(102, 126, 234, 0.3); font-weight: 600; }
+    tr:hover { background: rgba(255,255,255,0.05); }
+    tr.warning { background: rgba(251, 191, 36, 0.1); }
+    tr.danger { background: rgba(239, 68, 68, 0.1); }
+    .success { color: #4ade80; font-weight: bold; }
+    .death { color: #f87171; font-weight: bold; }
+    .grade-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      color: white;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .title-list { text-align: left; font-size: 13px; color: #ccc; }
+    .info-box {
+      background: rgba(102, 126, 234, 0.2);
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .stat-item {
+      background: rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-value { font-size: 24px; font-weight: bold; color: #667eea; }
+    .stat-label { font-size: 12px; color: #aaa; margin-top: 5px; }
+    .nav-links {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .nav-links a {
+      color: #667eea;
+      margin: 0 10px;
+      text-decoration: none;
+    }
+    .nav-links a:hover { text-decoration: underline; }
+    @media (max-width: 600px) {
+      th, td { padding: 6px 4px; font-size: 12px; }
+      .title-list { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>👤 인간 키우기 게임 정보</h1>
+
+    <div class="nav-links">
+      <a href="/game/help">도움말</a> |
+      <a href="/game/info">게임 정보</a> |
+      <a href="https://github.com/1mJeeHwan/kakao-human-game">GitHub</a>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-item">
+        <div class="stat-value">\${TITLES.length}</div>
+        <div class="stat-label">칭호 수</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">\${JOBS.length}</div>
+        <div class="stat-label">직업 수</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">15</div>
+        <div class="stat-label">최대 레벨</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">5,000G</div>
+        <div class="stat-label">시작 골드</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⚔️ 성장 확률표</h2>
+      <div class="info-box">
+        💡 5강 이후 점진적 난이도 증가, 10강 이후 본격적인 지옥 시작!<br>
+        💀 사망 시 파괴 지원금 지급 (투자금의 50~200%)
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>레벨</th>
+            <th>성공</th>
+            <th>실패</th>
+            <th>사망</th>
+            <th>비용</th>
+            <th>판매가</th>
+            <th>비용률</th>
+          </tr>
+        </thead>
+        <tbody>
+          \${upgradeRows}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>🏷️ 칭호 목록 (총 \${TITLES.length}개)</h2>
+      <div class="info-box">
+        🎲 성장 성공 시 20% 확률로 칭호 변경!<br>
+        💰 높은 등급일수록 판매 보너스 증가
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>등급</th>
+            <th>보너스</th>
+            <th>개수</th>
+            <th>칭호 목록</th>
+          </tr>
+        </thead>
+        <tbody>
+          \${titleRows}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>💼 직업 목록 (총 \${JOBS.length}개)</h2>
+      <div class="info-box">
+        🎲 성장 성공 시 15% 확률로 직업 변경!<br>
+        📈 레벨에 따라 직업 수식어 변경 (수습 → 견습 → 숙련 → 베테랑 → 마스터 → 그랜드마스터)
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>등급</th>
+            <th>보너스</th>
+            <th>개수</th>
+            <th>직업 목록</th>
+          </tr>
+        </thead>
+        <tbody>
+          \${jobRows}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>🎁 도감 완성 보상</h2>
+      <table>
+        <thead>
+          <tr><th>조건</th><th>보상</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>칭호 도감 완성</td><td>100,000G</td></tr>
+          <tr><td>직업 도감 완성</td><td>150,000G</td></tr>
+          <tr><td>전체 도감 완성</td><td>500,000G</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
+  \`;
+  res.send(html);
+});
+
 // 도움말 웹페이지 (GET)
 router.get('/help', (req, res) => {
   const html = `
