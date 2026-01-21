@@ -139,7 +139,8 @@ const STATUS_SEEDS = {
 
 // 상태별 정적 이미지 파일명
 const STATIC_STATUS_IMAGES = {
-  death: 'death.png'
+  death: 'death.png',
+  sell: 'sell.png'
 };
 
 // 등급별 배경색 (기본)
