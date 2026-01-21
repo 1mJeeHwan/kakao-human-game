@@ -128,13 +128,18 @@ const JOB_SEEDS = {
   '대부호': 'billionaire_rich'
 };
 
-// 상태별 시드
+// 상태별 시드 (DiceBear 폴백용)
 const STATUS_SEEDS = {
   success: 'success_sparkle_green',
   fail: 'fail_broken_gray',
   death: 'death_skull_dark',
   sell: 'sell_gold_coins',
   reroll: 'reroll_dice_random'
+};
+
+// 상태별 정적 이미지 파일명
+const STATIC_STATUS_IMAGES = {
+  death: 'death.png'
 };
 
 // 등급별 배경색 (기본)
@@ -254,6 +259,12 @@ function getJobImage(jobName, jobGrade = 'common', level = 0, titleGrade = 'comm
  * @returns {string} 이미지 URL
  */
 function getStatusImage(status, level = 0) {
+  // 정적 이미지가 있으면 우선 사용
+  if (USE_STATIC_IMAGES && STATIC_STATUS_IMAGES[status]) {
+    return `${STATIC_IMAGE_BASE}${STATIC_STATUS_IMAGES[status]}`;
+  }
+
+  // 폴백: DiceBear API 사용
   const seed = STATUS_SEEDS[status] || status;
 
   // 상태별 배경색
