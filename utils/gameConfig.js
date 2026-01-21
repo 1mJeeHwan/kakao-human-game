@@ -9,23 +9,24 @@ const INITIAL_GOLD = 5000;
 const MAX_LEVEL = 15;
 
 // 성장 확률 테이블 (7강부터 파괴 확률 급증)
+// 비용 = 해당 레벨 판매가의 1/4
 // success + death + fail = 100
 const UPGRADE_TABLE = [
-  { level: 0, success: 100, death: 0, fail: 0, cost: 200 },
-  { level: 1, success: 90, death: 0, fail: 10, cost: 400 },
-  { level: 2, success: 80, death: 0, fail: 20, cost: 600 },
-  { level: 3, success: 70, death: 5, fail: 25, cost: 1000 },
-  { level: 4, success: 60, death: 10, fail: 30, cost: 1800 },
-  { level: 5, success: 50, death: 15, fail: 35, cost: 3500 },
-  { level: 6, success: 40, death: 20, fail: 40, cost: 6000 },
-  { level: 7, success: 30, death: 35, fail: 35, cost: 10000 },
-  { level: 8, success: 25, death: 45, fail: 30, cost: 18000 },
-  { level: 9, success: 20, death: 55, fail: 25, cost: 30000 },
-  { level: 10, success: 15, death: 60, fail: 25, cost: 50000 },
-  { level: 11, success: 10, death: 65, fail: 25, cost: 80000 },
-  { level: 12, success: 7, death: 70, fail: 23, cost: 130000 },
-  { level: 13, success: 4, death: 76, fail: 20, cost: 200000 },
-  { level: 14, success: 2, death: 83, fail: 15, cost: 350000 }
+  { level: 0, success: 100, death: 0, fail: 0, cost: 50 },
+  { level: 1, success: 90, death: 0, fail: 10, cost: 100 },
+  { level: 2, success: 80, death: 0, fail: 20, cost: 200 },
+  { level: 3, success: 70, death: 5, fail: 25, cost: 400 },
+  { level: 4, success: 60, death: 10, fail: 30, cost: 800 },
+  { level: 5, success: 50, death: 15, fail: 35, cost: 1600 },
+  { level: 6, success: 40, death: 20, fail: 40, cost: 6400 },
+  { level: 7, success: 30, death: 35, fail: 35, cost: 25600 },
+  { level: 8, success: 25, death: 45, fail: 30, cost: 102400 },
+  { level: 9, success: 20, death: 55, fail: 25, cost: 409600 },
+  { level: 10, success: 15, death: 60, fail: 25, cost: 1638400 },
+  { level: 11, success: 10, death: 65, fail: 25, cost: 6553600 },
+  { level: 12, success: 7, death: 70, fail: 23, cost: 26214400 },
+  { level: 13, success: 4, death: 76, fail: 20, cost: 104857600 },
+  { level: 14, success: 2, death: 83, fail: 15, cost: 419430400 }
 ];
 
 // 성장 성공 시 칭호/직업 변경 확률 (%)
