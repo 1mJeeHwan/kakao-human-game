@@ -66,6 +66,8 @@ npm test
 | POST /game/reward | 도감 보상 수령 |
 | POST /game/updates | 업데이트 공지 |
 | POST /game/stats | 통계 조회 |
+| POST /game/help | 도움말 (챗봇) |
+| GET /game/help | 도움말 웹페이지 |
 
 ### 요청 형식 (카카오 오픈빌더)
 ```json
@@ -197,7 +199,7 @@ DiceBear API를 사용한 픽셀 아트 아바타 자동 생성
 ### 카카오 오픈빌더
 1. 카카오톡 채널 생성
 2. 오픈빌더에서 봇 생성
-3. 스킬 8개 등록:
+3. 스킬 9개 등록:
    - 게임시작: `/game/start` (발화: 시작, 내정보)
    - 성장하기: `/game/upgrade` (발화: 성장)
    - 판매하기: `/game/sell` (발화: 판매)
@@ -206,6 +208,7 @@ DiceBear API를 사용한 픽셀 아트 아바타 자동 생성
    - 보상받기: `/game/reward` (발화: 보상)
    - 업데이트: `/game/updates` (발화: 업데이트)
    - 기록: `/game/stats` (발화: 기록)
+   - 도움말: `/game/help` (발화: 도움말, 명령어, 안내)
 4. 블록 생성 및 스킬 연결
 5. 배포
 
