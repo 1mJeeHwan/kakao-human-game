@@ -1,11 +1,71 @@
 /**
  * 이미지 URL 관리
- * DiceBear API로 픽셀 아트 스타일 아바타 생성
+ * 우선순위: 1. 미리 생성된 정적 이미지 → 2. DiceBear 폴백
  * 레벨과 등급에 따라 더 화려한 이미지 생성
  */
 
-// DiceBear 픽셀 아트 스타일 (무료, URL만으로 생성)
+// 정적 이미지 베이스 URL (환경변수 또는 로컬)
+const STATIC_IMAGE_BASE = process.env.JOB_IMAGE_BASE_URL || '/images/jobs/';
+
+// DiceBear 픽셀 아트 스타일 (폴백용)
 const DICEBEAR_BASE = 'https://api.dicebear.com/7.x/pixel-art/png';
+
+// 정적 이미지 사용 여부 (이미지가 준비되면 true로 변경)
+const USE_STATIC_IMAGES = process.env.USE_STATIC_IMAGES === 'true';
+
+// 직업별 정적 이미지 파일명
+const STATIC_JOB_IMAGES = {
+  // 일반 (Common)
+  '회사원': 'office_worker.png',
+  '공무원': 'government_worker.png',
+  '알바생': 'part_timer.png',
+  '백수': 'unemployed.png',
+  '학생': 'student.png',
+  '농부': 'farmer.png',
+  '상인': 'merchant.png',
+  '운전기사': 'driver.png',
+  '청소부': 'cleaner.png',
+  '경비원': 'security_guard.png',
+  '배달원': 'delivery_rider.png',
+  '점원': 'store_clerk.png',
+  // 고급 (Uncommon)
+  '요리사': 'chef.png',
+  '개발자': 'developer.png',
+  '디자이너': 'designer.png',
+  '건축가': 'architect.png',
+  '가수': 'singer.png',
+  '배우': 'actor.png',
+  '화가': 'painter.png',
+  '운동선수': 'athlete.png',
+  '전사': 'warrior.png',
+  '궁수': 'archer.png',
+  '사진작가': 'photographer.png',
+  '작가': 'writer.png',
+  '유튜버': 'youtuber.png',
+  '스트리머': 'streamer.png',
+  // 희귀 (Rare)
+  '의사': 'doctor.png',
+  '변호사': 'lawyer.png',
+  '교수': 'professor.png',
+  '연구원': 'researcher.png',
+  '마법사': 'wizard.png',
+  '기사': 'knight.png',
+  '탐정': 'detective.png',
+  '모험가': 'adventurer.png',
+  '파일럿': 'pilot.png',
+  '외교관': 'diplomat.png',
+  '프로게이머': 'pro_gamer.png',
+  '사업가': 'businessman.png',
+  // 전설 (Legendary)
+  '용사': 'hero.png',
+  '대마법사': 'archmage.png',
+  '연금술사': 'alchemist.png',
+  '용병': 'mercenary.png',
+  '암살자': 'assassin.png',
+  '현자': 'sage.png',
+  '드래곤슬레이어': 'dragon_slayer.png',
+  '대부호': 'billionaire.png'
+};
 
 // 직업별 시드 (일관된 이미지 생성)
 const JOB_SEEDS = {
@@ -132,6 +192,21 @@ function getEnhancedBackground(baseColor, level) {
 }
 
 /**
+ * 정적 이미지 URL 가져오기 (이미지가 준비된 경우)
+ * @param {string} jobName - 직업 이름
+ * @returns {string|null} 정적 이미지 URL 또는 null
+ */
+function getStaticJobImage(jobName) {
+  if (!USE_STATIC_IMAGES) return null;
+
+  const filename = STATIC_JOB_IMAGES[jobName];
+  if (filename) {
+    return `${STATIC_IMAGE_BASE}${filename}`;
+  }
+  return null;
+}
+
+/**
  * 직업 이미지 URL 생성 (레벨과 등급 반영)
  * @param {string} jobName - 직업 이름
  * @param {string} jobGrade - 직업 등급
@@ -140,6 +215,13 @@ function getEnhancedBackground(baseColor, level) {
  * @returns {string} 이미지 URL
  */
 function getJobImage(jobName, jobGrade = 'common', level = 0, titleGrade = 'common') {
+  // 정적 이미지가 있으면 우선 사용
+  const staticImage = getStaticJobImage(jobName);
+  if (staticImage) {
+    return staticImage;
+  }
+
+  // 폴백: DiceBear API 사용
   const seed = JOB_SEEDS[jobName] || jobName;
   const baseBgColor = GRADE_BACKGROUNDS[jobGrade] || GRADE_BACKGROUNDS.common;
   const bgColor = getEnhancedBackground(baseBgColor, level);
@@ -210,11 +292,54 @@ function getGradeColor(grade) {
   return colors[grade] || colors.common;
 }
 
+/**
+ * 등급별 인라인 CSS 스타일 (카카오톡 호환)
+ */
+const GRADE_INLINE_STYLES = {
+  common: 'border: 3px solid #808080; border-radius: 12px;',
+  uncommon: 'border: 3px solid #22c55e; border-radius: 12px; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);',
+  rare: 'border: 3px solid #3b82f6; border-radius: 12px; box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);',
+  legendary: 'border: 4px solid #f59e0b; border-radius: 12px; box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);'
+};
+
+/**
+ * 등급별 인라인 스타일 가져오기
+ * @param {string} grade - 등급
+ * @returns {string} 인라인 CSS 스타일
+ */
+function getGradeInlineStyle(grade) {
+  return GRADE_INLINE_STYLES[grade] || GRADE_INLINE_STYLES.common;
+}
+
+/**
+ * 이미지 URL + 스타일 정보 함께 가져오기
+ * @param {string} jobName - 직업 이름
+ * @param {string} jobGrade - 직업 등급
+ * @param {number} level - 현재 레벨
+ * @param {string} titleGrade - 칭호 등급
+ * @returns {Object} 이미지 URL과 스타일 정보
+ */
+function getJobImageWithStyle(jobName, jobGrade = 'common', level = 0, titleGrade = 'common') {
+  return {
+    url: getJobImage(jobName, jobGrade, level, titleGrade),
+    inlineStyle: getGradeInlineStyle(jobGrade),
+    isStatic: USE_STATIC_IMAGES && !!STATIC_JOB_IMAGES[jobName],
+    grade: jobGrade,
+    level
+  };
+}
+
 module.exports = {
   getJobImage,
   getStatusImage,
   getGradeColor,
+  getStaticJobImage,
+  getGradeInlineStyle,
+  getJobImageWithStyle,
   JOB_SEEDS,
   STATUS_SEEDS,
-  GRADE_BACKGROUNDS
+  GRADE_BACKGROUNDS,
+  GRADE_INLINE_STYLES,
+  STATIC_JOB_IMAGES,
+  USE_STATIC_IMAGES
 };

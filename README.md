@@ -100,11 +100,20 @@ kakao_game_1/
 ├── controllers/
 │   └── gameController.js # 게임 로직
 ├── utils/
-│   ├── titles.js         # 칭호 데이터
-│   ├── jobs.js           # 직업 데이터
+│   ├── titles.js         # 칭호 데이터 (65+ 특수능력 포함)
+│   ├── jobs.js           # 직업 데이터 (46개)
 │   ├── images.js         # 이미지 URL 생성
+│   ├── jobImages.js      # 정적 이미지 관리
+│   ├── deathMessages.js  # 사망/환급 메시지
 │   ├── gameConfig.js     # 성장 확률 테이블
 │   └── helpers.js        # 헬퍼 함수
+├── public/
+│   ├── css/
+│   │   └── job-cards.css # 등급별 CSS 스타일
+│   └── images/
+│       └── jobs/         # 직업별 이미지 (46개)
+├── docs/
+│   └── GEMINI_IMAGE_PROMPTS.md  # 이미지 생성 가이드
 └── tests/
     └── game.test.js      # 테스트
 ```
@@ -188,10 +197,31 @@ kakao_game_1/
 
 ## 이미지 시스템
 
-DiceBear API를 사용한 픽셀 아트 아바타 자동 생성
+### 정적 이미지 (권장)
+46개 직업별 커스텀 이미지 지원:
+- **폴더**: `/public/images/jobs/`
+- **프롬프트 가이드**: `/docs/GEMINI_IMAGE_PROMPTS.md`
+- **CSS 스타일**: `/public/css/job-cards.css`
+
+**환경 변수 설정**:
+```env
+USE_STATIC_IMAGES=true
+JOB_IMAGE_BASE_URL=https://your-image-host.com/jobs/
+```
+
+### DiceBear 폴백
+정적 이미지가 없을 경우 DiceBear API 자동 사용:
 - 레벨에 따른 이미지 변화
 - 등급에 따른 배경색 변화
 - 고레벨(13+): 금빛 배경
+
+### 등급별 CSS 테두리
+| 등급 | 스타일 |
+|------|--------|
+| 일반 | 회색 3px 테두리 |
+| 고급 | 초록 3px + 발광 |
+| 희귀 | 파랑 3px + 애니메이션 |
+| 전설 | 금색 4px + 반짝임 |
 
 ## 배포
 

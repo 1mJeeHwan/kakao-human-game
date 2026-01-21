@@ -71,17 +71,16 @@ router.get('/info', (req, res) => {
   for (const info of UPGRADE_TABLE) {
     const sellPrice = getSellPrice(info.level + 1);
     const ratio = ((info.cost / sellPrice) * 100).toFixed(1);
-    upgradeRows += \`
-      <tr class="\${info.level >= 10 ? 'danger' : info.level >= 5 ? 'warning' : ''}">
-        <td>\${info.level}→\${info.level + 1}</td>
-        <td class="success">\${info.success}%</td>
-        <td>\${info.fail}%</td>
-        <td class="death">\${info.death}%</td>
-        <td>\${formatNum(info.cost)}G</td>
-        <td>\${formatNum(sellPrice)}G</td>
-        <td>\${ratio}%</td>
-      </tr>
-    \`;
+    const rowClass = info.level >= 10 ? 'danger' : info.level >= 5 ? 'warning' : '';
+    upgradeRows += '<tr class="' + rowClass + '">' +
+      '<td>' + info.level + '→' + (info.level + 1) + '</td>' +
+      '<td class="success">' + info.success + '%</td>' +
+      '<td>' + info.fail + '%</td>' +
+      '<td class="death">' + info.death + '%</td>' +
+      '<td>' + formatNum(info.cost) + 'G</td>' +
+      '<td>' + formatNum(sellPrice) + 'G</td>' +
+      '<td>' + ratio + '%</td>' +
+      '</tr>';
   }
 
   // 칭호 테이블 HTML
@@ -93,14 +92,12 @@ router.get('/info', (req, res) => {
   for (const grade of gradeOrder) {
     const titlesOfGrade = TITLES.filter(t => t.grade === grade);
     const bonus = titlesOfGrade[0]?.bonusRate * 100 || 0;
-    titleRows += \`
-      <tr>
-        <td><span class="grade-badge" style="background:\${gradeColors[grade]}">\${gradeKorean[grade]}</span></td>
-        <td>+\${bonus}%</td>
-        <td>\${titlesOfGrade.length}개</td>
-        <td class="title-list">\${titlesOfGrade.map(t => t.name).join(', ')}</td>
-      </tr>
-    \`;
+    titleRows += '<tr>' +
+      '<td><span class="grade-badge" style="background:' + gradeColors[grade] + '">' + gradeKorean[grade] + '</span></td>' +
+      '<td>+' + bonus + '%</td>' +
+      '<td>' + titlesOfGrade.length + '개</td>' +
+      '<td class="title-list">' + titlesOfGrade.map(t => t.name).join(', ') + '</td>' +
+      '</tr>';
   }
 
   // 직업 테이블 HTML
@@ -108,18 +105,15 @@ router.get('/info', (req, res) => {
   for (const grade of ['common', 'uncommon', 'rare', 'legendary']) {
     const jobsOfGrade = JOBS.filter(j => j.grade === grade);
     const bonus = jobsOfGrade[0]?.bonusRate * 100 || 0;
-    jobRows += \`
-      <tr>
-        <td><span class="grade-badge" style="background:\${gradeColors[grade]}">\${gradeKorean[grade]}</span></td>
-        <td>+\${bonus}%</td>
-        <td>\${jobsOfGrade.length}개</td>
-        <td class="title-list">\${jobsOfGrade.map(j => j.name).join(', ')}</td>
-      </tr>
-    \`;
+    jobRows += '<tr>' +
+      '<td><span class="grade-badge" style="background:' + gradeColors[grade] + '">' + gradeKorean[grade] + '</span></td>' +
+      '<td>+' + bonus + '%</td>' +
+      '<td>' + jobsOfGrade.length + '개</td>' +
+      '<td class="title-list">' + jobsOfGrade.map(j => j.name).join(', ') + '</td>' +
+      '</tr>';
   }
 
-  const html = \`
-<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -210,11 +204,11 @@ router.get('/info', (req, res) => {
 
     <div class="stat-grid">
       <div class="stat-item">
-        <div class="stat-value">\${TITLES.length}</div>
+        <div class="stat-value">${TITLES.length}</div>
         <div class="stat-label">칭호 수</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">\${JOBS.length}</div>
+        <div class="stat-value">${JOBS.length}</div>
         <div class="stat-label">직업 수</div>
       </div>
       <div class="stat-item">
@@ -246,13 +240,13 @@ router.get('/info', (req, res) => {
           </tr>
         </thead>
         <tbody>
-          \${upgradeRows}
+          ${upgradeRows}
         </tbody>
       </table>
     </div>
 
     <div class="card">
-      <h2>🏷️ 칭호 목록 (총 \${TITLES.length}개)</h2>
+      <h2>🏷️ 칭호 목록 (총 ${TITLES.length}개)</h2>
       <div class="info-box">
         🎲 성장 성공 시 20% 확률로 칭호 변경!<br>
         💰 높은 등급일수록 판매 보너스 증가
@@ -267,13 +261,13 @@ router.get('/info', (req, res) => {
           </tr>
         </thead>
         <tbody>
-          \${titleRows}
+          ${titleRows}
         </tbody>
       </table>
     </div>
 
     <div class="card">
-      <h2>💼 직업 목록 (총 \${JOBS.length}개)</h2>
+      <h2>💼 직업 목록 (총 ${JOBS.length}개)</h2>
       <div class="info-box">
         🎲 성장 성공 시 15% 확률로 직업 변경!<br>
         📈 레벨에 따라 직업 수식어 변경 (수습 → 견습 → 숙련 → 베테랑 → 마스터 → 그랜드마스터)
@@ -288,7 +282,7 @@ router.get('/info', (req, res) => {
           </tr>
         </thead>
         <tbody>
-          \${jobRows}
+          ${jobRows}
         </tbody>
       </table>
     </div>
@@ -308,8 +302,7 @@ router.get('/info', (req, res) => {
     </div>
   </div>
 </body>
-</html>
-  \`;
+</html>`;
   res.send(html);
 });
 

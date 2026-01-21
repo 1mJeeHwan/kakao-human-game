@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { connectDatabase } = require('./config/database');
 const gameRoutes = require('./routes/game');
 
@@ -16,6 +17,9 @@ const PORT = process.env.PORT || 3000;
 // 미들웨어
 app.use(cors());
 app.use(express.json());
+
+// 정적 파일 서빙 (이미지, CSS 등)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 요청 로깅 (개발용)
 if (process.env.NODE_ENV !== 'production') {
