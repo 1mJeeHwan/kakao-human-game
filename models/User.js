@@ -26,7 +26,9 @@ const userSchema = new mongoose.Schema({
     title: {
       name: { type: String, required: true },
       grade: { type: String, required: true },
-      bonusRate: { type: Number, required: true }
+      bonusRate: { type: Number, required: true },
+      special: { type: String, default: null },
+      specialUsed: { type: Boolean, default: false }
     },
 
     job: {
@@ -117,7 +119,9 @@ userSchema.methods.createNewHuman = function() {
     title: {
       name: title.name,
       grade: title.grade,
-      bonusRate: title.bonusRate
+      bonusRate: title.bonusRate,
+      special: title.special || null,
+      specialUsed: false
     },
     job: {
       name: job.name,
@@ -151,7 +155,9 @@ userSchema.methods.rerollTitle = function() {
   this.human.title = {
     name: newTitle.name,
     grade: newTitle.grade,
-    bonusRate: newTitle.bonusRate
+    bonusRate: newTitle.bonusRate,
+    special: newTitle.special || null,
+    specialUsed: false
   };
 
   // 도감에 추가
@@ -243,6 +249,28 @@ userSchema.methods.addAchievement = function(achievementId) {
 userSchema.methods.handleDeath = function() {
   this.stats.deathCount += 1;
   this.createNewHuman();
+};
+
+/**
+ * 직업 상실 처리 (백수로 변경)
+ */
+userSchema.methods.loseJob = function() {
+  const { getUnemployedJob } = require('../utils/jobs');
+  const unemployed = getUnemployedJob();
+
+  this.human.job = {
+    name: unemployed.name,
+    category: unemployed.category,
+    grade: unemployed.grade,
+    bonusRate: unemployed.bonusRate
+  };
+};
+
+/**
+ * 특수 능력 사용 처리
+ */
+userSchema.methods.useSpecialAbility = function() {
+  this.human.title.specialUsed = true;
 };
 
 /**

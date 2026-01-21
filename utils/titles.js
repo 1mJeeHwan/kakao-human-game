@@ -1,6 +1,6 @@
 /**
  * 칭호(접두 수식어) 데이터 및 관련 함수
- * 총 60개 이상의 다양한 칭호
+ * 특수 능력이 있는 칭호 포함
  */
 
 const TITLE_GRADES = {
@@ -27,7 +27,31 @@ const GRADE_EMOJI = {
   [TITLE_GRADES.LEGENDARY]: '🌟'
 };
 
-// 칭호 목록 (총 65개)
+// 특수 능력 타입
+const SPECIAL_ABILITIES = {
+  DEATH_PROTECT: 'deathProtect',      // 사망 1회 방지
+  DOUBLE_SELL: 'doubleSell',          // 판매가 2배
+  LUCK_UP: 'luckUp',                  // 성공률 +5%
+  COST_DOWN: 'costDown',              // 비용 50% 할인
+  JACKPOT_UP: 'jackpotUp',            // 잭팟 확률 2배
+  BONUS_GOLD: 'bonusGold',            // 판매 시 추가 골드
+  FAIL_TO_SUCCESS: 'failToSuccess',   // 실패를 성공으로 (1회)
+  DOUBLE_REFUND: 'doubleRefund'       // 파괴 지원금 2배
+};
+
+// 특수 능력 설명
+const ABILITY_DESCRIPTIONS = {
+  [SPECIAL_ABILITIES.DEATH_PROTECT]: '💫 사망 1회 방지',
+  [SPECIAL_ABILITIES.DOUBLE_SELL]: '💰 판매가 2배',
+  [SPECIAL_ABILITIES.LUCK_UP]: '🍀 성공률 +5%',
+  [SPECIAL_ABILITIES.COST_DOWN]: '💸 성장 비용 50% 할인',
+  [SPECIAL_ABILITIES.JACKPOT_UP]: '🎰 잭팟 확률 2배',
+  [SPECIAL_ABILITIES.BONUS_GOLD]: '💎 판매 시 +10,000G',
+  [SPECIAL_ABILITIES.FAIL_TO_SUCCESS]: '🔄 실패→성공 변환 (1회)',
+  [SPECIAL_ABILITIES.DOUBLE_REFUND]: '🛡️ 파괴 지원금 2배'
+};
+
+// 칭호 목록 (총 70개+)
 const TITLES = [
   // ========== 일반 (40%) - 보너스 0% ==========
   // 평범한 수식어
@@ -54,7 +78,6 @@ const TITLES = [
   { name: '허당인', grade: TITLE_GRADES.COMMON, bonusRate: 0 },
 
   // ========== 고급 (30%) - 보너스 10% ==========
-  // 긍정적 수식어
   { name: '부지런한', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
   { name: '성실한', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
   { name: '밝은', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
@@ -65,48 +88,48 @@ const TITLES = [
   { name: '다정한', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
   { name: '따뜻한', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
   { name: '명랑한', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
-  // 외형 수식어
   { name: '반짝반짝', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
   { name: '깔끔한', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
   { name: '단정한', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
   { name: '귀여운', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
   { name: '멋진', grade: TITLE_GRADES.UNCOMMON, bonusRate: 0.1 },
 
-  // ========== 희귀 (20%) - 보너스 25% ==========
-  // 능력 수식어
+  // ========== 희귀 (20%) - 보너스 25% + 일부 특수능력 ==========
   { name: '용맹한', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
   { name: '현명한', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
   { name: '천재적인', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
   { name: '카리스마 있는', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
   { name: '총명한', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
   { name: '기품있는', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
-  // 신비로운 수식어
   { name: '신비로운', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
   { name: '영롱한', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
   { name: '빛나는', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
   { name: '찬란한', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
-  { name: '눈부신', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
-  { name: '화려한', grade: TITLE_GRADES.RARE, bonusRate: 0.25 },
+  // 특수 능력 보유 (희귀)
+  { name: '행운의', grade: TITLE_GRADES.RARE, bonusRate: 0.25, special: SPECIAL_ABILITIES.LUCK_UP },
+  { name: '알뜰한', grade: TITLE_GRADES.RARE, bonusRate: 0.25, special: SPECIAL_ABILITIES.COST_DOWN },
 
-  // ========== 영웅 (8%) - 보너스 50% ==========
+  // ========== 영웅 (8%) - 보너스 50% + 특수능력 ==========
   { name: '위대한', grade: TITLE_GRADES.EPIC, bonusRate: 0.5 },
   { name: '고귀한', grade: TITLE_GRADES.EPIC, bonusRate: 0.5 },
   { name: '성스러운', grade: TITLE_GRADES.EPIC, bonusRate: 0.5 },
   { name: '신성한', grade: TITLE_GRADES.EPIC, bonusRate: 0.5 },
-  { name: '불꽃의', grade: TITLE_GRADES.EPIC, bonusRate: 0.5 },
-  { name: '번개의', grade: TITLE_GRADES.EPIC, bonusRate: 0.5 },
-  { name: '폭풍의', grade: TITLE_GRADES.EPIC, bonusRate: 0.5 },
-  { name: '황금빛', grade: TITLE_GRADES.EPIC, bonusRate: 0.5 },
+  // 특수 능력 보유 (영웅)
+  { name: '불굴의', grade: TITLE_GRADES.EPIC, bonusRate: 0.5, special: SPECIAL_ABILITIES.FAIL_TO_SUCCESS },
+  { name: '축복받은', grade: TITLE_GRADES.EPIC, bonusRate: 0.5, special: SPECIAL_ABILITIES.DEATH_PROTECT },
+  { name: '황금빛', grade: TITLE_GRADES.EPIC, bonusRate: 0.5, special: SPECIAL_ABILITIES.BONUS_GOLD },
+  { name: '도박사', grade: TITLE_GRADES.EPIC, bonusRate: 0.5, special: SPECIAL_ABILITIES.JACKPOT_UP },
 
-  // ========== 전설 (2%) - 보너스 100% ==========
+  // ========== 전설 (2%) - 보너스 100% + 강력한 특수능력 ==========
   { name: '전설의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0 },
   { name: '신화적인', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0 },
-  { name: '불멸의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0 },
-  { name: '태초의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0 },
-  { name: '절대적인', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0 },
-  { name: '초월한', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0 },
-  { name: '우주의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0 },
-  { name: '심연의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0 }
+  // 특수 능력 보유 (전설)
+  { name: '불멸의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0, special: SPECIAL_ABILITIES.DEATH_PROTECT },
+  { name: '태초의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0, special: SPECIAL_ABILITIES.DOUBLE_SELL },
+  { name: '절대적인', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0, special: SPECIAL_ABILITIES.LUCK_UP },
+  { name: '초월한', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0, special: SPECIAL_ABILITIES.FAIL_TO_SUCCESS },
+  { name: '우주의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0, special: SPECIAL_ABILITIES.DOUBLE_REFUND },
+  { name: '심연의', grade: TITLE_GRADES.LEGENDARY, bonusRate: 1.0, special: SPECIAL_ABILITIES.JACKPOT_UP }
 ];
 
 // 등급별 확률
@@ -120,7 +143,6 @@ const GRADE_PROBABILITIES = {
 
 /**
  * 랜덤 칭호 뽑기
- * @returns {Object} { name, grade, bonusRate }
  */
 function rollTitle() {
   const roll = Math.random() * 100;
@@ -137,35 +159,49 @@ function rollTitle() {
 
   const titlesOfGrade = TITLES.filter(t => t.grade === selectedGrade);
   const randomIndex = Math.floor(Math.random() * titlesOfGrade.length);
+  const title = titlesOfGrade[randomIndex];
 
-  return { ...titlesOfGrade[randomIndex] };
+  return {
+    name: title.name,
+    grade: title.grade,
+    bonusRate: title.bonusRate,
+    special: title.special || null
+  };
 }
 
 /**
  * 칭호 정보 포맷팅
- * @param {Object} title - 칭호 객체
- * @returns {string} 포맷된 문자열
  */
 function formatTitleInfo(title) {
   const gradeKorean = GRADE_KOREAN[title.grade];
   const bonusPercent = Math.round(title.bonusRate * 100);
   const emoji = GRADE_EMOJI[title.grade];
 
-  return `${title.name} (${gradeKorean} +${bonusPercent}%) ${emoji}`.trim();
+  let text = `${title.name} (${gradeKorean} +${bonusPercent}%) ${emoji}`;
+
+  if (title.special) {
+    text += `\n  ${ABILITY_DESCRIPTIONS[title.special]}`;
+  }
+
+  return text.trim();
 }
 
 /**
- * 등급별 칭호 목록 가져오기
- * @param {string} grade - 등급
- * @returns {Array} 해당 등급의 칭호 배열
+ * 특수 능력 설명 가져오기
+ */
+function getAbilityDescription(abilityType) {
+  return ABILITY_DESCRIPTIONS[abilityType] || '';
+}
+
+/**
+ * 등급별 칭호 목록
  */
 function getTitlesByGrade(grade) {
   return TITLES.filter(t => t.grade === grade);
 }
 
 /**
- * 칭호 통계 가져오기
- * @returns {Object} 등급별 칭호 수
+ * 칭호 통계
  */
 function getTitleStats() {
   return {
@@ -174,7 +210,8 @@ function getTitleStats() {
     uncommon: getTitlesByGrade(TITLE_GRADES.UNCOMMON).length,
     rare: getTitlesByGrade(TITLE_GRADES.RARE).length,
     epic: getTitlesByGrade(TITLE_GRADES.EPIC).length,
-    legendary: getTitlesByGrade(TITLE_GRADES.LEGENDARY).length
+    legendary: getTitlesByGrade(TITLE_GRADES.LEGENDARY).length,
+    withSpecial: TITLES.filter(t => t.special).length
   };
 }
 
@@ -184,8 +221,11 @@ module.exports = {
   GRADE_EMOJI,
   TITLES,
   GRADE_PROBABILITIES,
+  SPECIAL_ABILITIES,
+  ABILITY_DESCRIPTIONS,
   rollTitle,
   formatTitleInfo,
+  getAbilityDescription,
   getTitlesByGrade,
   getTitleStats
 };

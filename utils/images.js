@@ -18,18 +18,26 @@ const JOB_SEEDS = {
   '농부': 'farmer_hat',
   '상인': 'merchant_gold',
   '운전기사': 'driver_cap',
+  '청소부': 'cleaner_broom',
+  '경비원': 'security_guard',
+  '배달원': 'delivery_rider',
+  '점원': 'store_clerk',
 
   // 기술직
   '요리사': 'chef_hat_white',
   '개발자': 'developer_glasses',
   '디자이너': 'designer_creative',
   '건축가': 'architect_helmet',
+  '사진작가': 'photographer_camera',
+  '작가': 'writer_pen',
 
   // 예체능
   '가수': 'singer_microphone',
   '배우': 'actor_star',
   '화가': 'painter_brush',
   '운동선수': 'athlete_medal',
+  '유튜버': 'youtuber_video',
+  '스트리머': 'streamer_gaming',
 
   // 판타지
   '전사': 'warrior_sword_shield',
@@ -42,6 +50,10 @@ const JOB_SEEDS = {
   '변호사': 'lawyer_justice',
   '교수': 'professor_graduate',
   '연구원': 'researcher_lab',
+  '파일럿': 'pilot_plane',
+  '외교관': 'diplomat_flag',
+  '프로게이머': 'progamer_trophy',
+  '사업가': 'businessman_money',
 
   // 특수직
   '탐정': 'detective_magnifier',
@@ -51,7 +63,9 @@ const JOB_SEEDS = {
   '연금술사': 'alchemist_potion',
   '용병': 'mercenary_battle',
   '암살자': 'assassin_shadow',
-  '현자': 'sage_wisdom'
+  '현자': 'sage_wisdom',
+  '드래곤슬레이어': 'dragonslayer_epic',
+  '대부호': 'billionaire_rich'
 };
 
 // 상태별 시드

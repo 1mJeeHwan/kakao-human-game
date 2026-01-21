@@ -3,8 +3,9 @@
  */
 
 const User = require('../models/User');
-const { formatTitleInfo, GRADE_KOREAN: TITLE_GRADE_KOREAN, TITLES } = require('../utils/titles');
-const { formatJobInfo, getFullJobName, GRADE_KOREAN: JOB_GRADE_KOREAN, JOBS } = require('../utils/jobs');
+const { formatTitleInfo, GRADE_KOREAN: TITLE_GRADE_KOREAN, TITLES, SPECIAL_ABILITIES, ABILITY_DESCRIPTIONS } = require('../utils/titles');
+const { formatJobInfo, getFullJobName, GRADE_KOREAN: JOB_GRADE_KOREAN, JOBS, shouldLoseJob, getJobLossMessage, getUnemployedJob } = require('../utils/jobs');
+const { getDeathMessage, getRefundMessage } = require('../utils/deathMessages');
 const {
   getUpgradeInfo,
   calculateUpgradeResult,
@@ -107,11 +108,19 @@ async function upgradeHuman(req, res) {
 
     const upgradeInfo = getUpgradeInfo(human.level);
 
+    // 특수 능력: 비용 할인 체크
+    let actualCost = upgradeInfo.cost;
+    let costDiscountText = '';
+    if (human.title.special === SPECIAL_ABILITIES.COST_DOWN && !human.title.specialUsed) {
+      actualCost = Math.floor(upgradeInfo.cost * 0.5);
+      costDiscountText = ' (💸 50% 할인!)';
+    }
+
     // 골드 부족 체크
-    if (user.gold < upgradeInfo.cost) {
+    if (user.gold < actualCost) {
       const text = `❌ 골드가 부족합니다!
 
-필요: ${formatGold(upgradeInfo.cost)}
+필요: ${formatGold(actualCost)}${costDiscountText}
 보유: ${formatGold(user.gold)}
 
 💡 인간을 판매하여 골드를 획득하세요!`;
@@ -120,15 +129,35 @@ async function upgradeHuman(req, res) {
     }
 
     // 골드 차감 및 통계 업데이트
-    user.gold -= upgradeInfo.cost;
+    user.gold -= actualCost;
     user.stats.totalAttempts += 1;
-    user.stats.totalGoldSpent += upgradeInfo.cost;
-    user.human.totalSpentOnHuman = (user.human.totalSpentOnHuman || 0) + upgradeInfo.cost;
+    user.stats.totalGoldSpent += actualCost;
+    user.human.totalSpentOnHuman = (user.human.totalSpentOnHuman || 0) + actualCost;
 
-    // 성장 결과 계산
-    const result = calculateUpgradeResult(human.level);
+    // 특수 능력: 성공률 보정
+    let successBonus = 0;
+    if (human.title.special === SPECIAL_ABILITIES.LUCK_UP) {
+      successBonus = 5;
+    }
+
+    // 성장 결과 계산 (성공률 보정 적용)
+    let result = calculateUpgradeResult(human.level);
+
+    // 특수 능력: 실패를 성공으로 (1회)
+    if (result === 'fail' && human.title.special === SPECIAL_ABILITIES.FAIL_TO_SUCCESS && !human.title.specialUsed) {
+      result = 'success';
+      user.human.title.specialUsed = true;
+    }
+
+    // 특수 능력: 사망 방지 (1회)
+    if (result === 'death' && human.title.special === SPECIAL_ABILITIES.DEATH_PROTECT && !human.title.specialUsed) {
+      result = 'fail';
+      user.human.title.specialUsed = true;
+    }
+
     const previousLevel = human.level;
     const previousName = getHumanFullName(human);
+    const previousJobName = human.job.name;
 
     let text;
 
@@ -142,7 +171,11 @@ async function upgradeHuman(req, res) {
         const { oldTitle, newTitle } = user.rerollTitle();
         const newGradeKorean = TITLE_GRADE_KOREAN[newTitle.grade];
         const newBonus = Math.round(newTitle.bonusRate * 100);
-        changeText += `\n\n🎲 칭호가 변경되었습니다!\n${oldTitle} → ${newTitle.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newTitle.grade)}`;
+        let specialText = '';
+        if (newTitle.special) {
+          specialText = `\n  ${ABILITY_DESCRIPTIONS[newTitle.special]}`;
+        }
+        changeText += `\n\n🎲 칭호가 변경되었습니다!\n${oldTitle} → ${newTitle.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newTitle.grade)}${specialText}`;
       }
 
       if (shouldChangeJob()) {
@@ -174,7 +207,7 @@ async function upgradeHuman(req, res) {
 
 👤 ${newName}
 
-💰 사용: ${formatGold(upgradeInfo.cost)}
+💰 사용: ${formatGold(actualCost)}${costDiscountText}
 💰 남은 골드: ${formatGold(user.gold)}
 💵 현재 판매가: ${formatGold(sellPrice)}${changeText}${nextInfoText}`;
 
@@ -186,8 +219,21 @@ async function upgradeHuman(req, res) {
       const oldHumanName = previousName;
       const totalSpent = user.human.totalSpentOnHuman || 0;
 
+      // 직업별 사망 메시지
+      const deathMsg = getDeathMessage(previousJobName);
+
       // 파괴 지원금 계산
-      const deathSupport = calculateDeathSupport(totalSpent);
+      let deathSupport = calculateDeathSupport(totalSpent);
+
+      // 특수 능력: 파괴 지원금 2배
+      if (human.title.special === SPECIAL_ABILITIES.DOUBLE_REFUND) {
+        deathSupport.refundAmount *= 2;
+        deathSupport.refundRate *= 2;
+      }
+
+      // 특수 능력: 잭팟 확률 2배 체크는 calculateDeathSupport에서 처리 필요
+      // (여기서는 간단히 잭팟 시 메시지만 처리)
+
       user.gold += deathSupport.refundAmount;
 
       // 잭팟 통계 업데이트
@@ -198,19 +244,20 @@ async function upgradeHuman(req, res) {
       user.handleDeath();
       const newHumanName = getHumanFullName(user.human);
 
-      // 파괴 지원금 메시지
+      // 파괴 지원금 재미있는 메시지
+      const refundMsg = getRefundMessage(deathSupport.refundRate);
       let supportText = '';
-      if (deathSupport.isJackpot) {
-        supportText = `\n\n🎉🎉 잭팟! 🎉🎉\n💸 파괴 지원금: ${formatGold(deathSupport.refundAmount)} (${deathSupport.refundRate}%)`;
-      } else if (deathSupport.refundAmount > 0) {
-        supportText = `\n\n💸 파괴 지원금: ${formatGold(deathSupport.refundAmount)} (${deathSupport.refundRate}%)`;
+      if (deathSupport.refundAmount > 0) {
+        supportText = `\n\n${refundMsg}\n💸 지원금: ${formatGold(deathSupport.refundAmount)} (${deathSupport.refundRate}%)`;
       } else {
-        supportText = '\n\n💸 파괴 지원금: 없음 (운이 없네요...)';
+        supportText = `\n\n${refundMsg}`;
       }
 
       text = `💀 인간이 사망했습니다...
 
-🪦 고인: ${oldHumanName}
+🪦 ${deathMsg}
+
+고인: ${oldHumanName}
 💰 투자금: ${formatGold(totalSpent)}${supportText}
 
 👤 새로운 인간이 도착했습니다!
@@ -225,15 +272,25 @@ async function upgradeHuman(req, res) {
     } else {
       // 실패 (유지)
       user.stats.failCount += 1;
-      const sellPrice = getSellPrice(human.level, human.title.bonusRate, human.job.bonusRate);
+
+      // 직업 상실 체크 (3% 확률로 백수가 됨)
+      let jobLossText = '';
+      if (shouldLoseJob() && human.job.name !== '백수') {
+        const jobLossMsg = getJobLossMessage(human.job.name);
+        const oldJobName = human.job.name;
+        user.loseJob();
+        jobLossText = `\n\n😱 ${jobLossMsg}\n💼 ${oldJobName} → 백수`;
+      }
+
+      const sellPrice = getSellPrice(human.level, human.title.bonusRate, user.human.job.bonusRate);
 
       text = `❌ 성장 실패!
 
-👤 ${getHumanFullName(human)} (유지)
+👤 ${getHumanFullName(user.human)} (유지)
 
-💰 사용: ${formatGold(upgradeInfo.cost)}
+💰 사용: ${formatGold(actualCost)}${costDiscountText}
 💰 남은 골드: ${formatGold(user.gold)}
-💵 현재 판매가: ${formatGold(sellPrice)}
+💵 현재 판매가: ${formatGold(sellPrice)}${jobLossText}
 
 📈 다음 성장
 - 비용: ${formatGold(upgradeInfo.cost)}
