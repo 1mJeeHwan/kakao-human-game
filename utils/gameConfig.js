@@ -8,26 +8,64 @@ const INITIAL_GOLD = 5000;
 // 최대 레벨
 const MAX_LEVEL = 15;
 
-// 성장 확률 테이블 (7강부터 파괴 확률 급증)
+// 성장 확률 테이블 (10강부터 파괴 시작)
+// 실패율: 0,1,2,4,8,16,32,48,50,55 + 10강부터 파괴 10%씩 증가
 // 비용 = 해당 레벨 판매가의 20%
 // success + death + fail = 100
 const UPGRADE_TABLE = [
   { level: 0, success: 100, death: 0, fail: 0, cost: 40 },
-  { level: 1, success: 90, death: 0, fail: 10, cost: 80 },
-  { level: 2, success: 80, death: 0, fail: 20, cost: 160 },
-  { level: 3, success: 70, death: 5, fail: 25, cost: 320 },
-  { level: 4, success: 60, death: 10, fail: 30, cost: 640 },
-  { level: 5, success: 50, death: 15, fail: 35, cost: 1280 },
-  { level: 6, success: 40, death: 20, fail: 40, cost: 5120 },
-  { level: 7, success: 30, death: 35, fail: 35, cost: 20480 },
-  { level: 8, success: 25, death: 45, fail: 30, cost: 81920 },
-  { level: 9, success: 20, death: 55, fail: 25, cost: 327680 },
-  { level: 10, success: 15, death: 60, fail: 25, cost: 1310720 },
-  { level: 11, success: 10, death: 65, fail: 25, cost: 5242880 },
-  { level: 12, success: 7, death: 70, fail: 23, cost: 20971520 },
-  { level: 13, success: 4, death: 76, fail: 20, cost: 83886080 },
-  { level: 14, success: 2, death: 83, fail: 15, cost: 335544320 }
+  { level: 1, success: 99, death: 0, fail: 1, cost: 80 },
+  { level: 2, success: 98, death: 0, fail: 2, cost: 160 },
+  { level: 3, success: 96, death: 0, fail: 4, cost: 320 },
+  { level: 4, success: 92, death: 0, fail: 8, cost: 640 },
+  { level: 5, success: 84, death: 0, fail: 16, cost: 1280 },
+  { level: 6, success: 68, death: 0, fail: 32, cost: 5120 },
+  { level: 7, success: 52, death: 0, fail: 48, cost: 20480 },
+  { level: 8, success: 50, death: 0, fail: 50, cost: 81920 },
+  { level: 9, success: 45, death: 0, fail: 55, cost: 327680 },
+  { level: 10, success: 30, death: 10, fail: 60, cost: 1310720 },
+  { level: 11, success: 15, death: 20, fail: 65, cost: 5242880 },
+  { level: 12, success: 0, death: 30, fail: 70, cost: 20971520 },
+  { level: 13, success: 0, death: 40, fail: 60, cost: 83886080 },
+  { level: 14, success: 0, death: 50, fail: 50, cost: 335544320 }
 ];
+
+// 파괴 지원금 확률 테이블
+const DEATH_SUPPORT_TABLE = [
+  { refundRate: 0.5, chance: 50 },    // 50% 환급: 50% 확률
+  { refundRate: 0.7, chance: 30 },    // 70% 환급: 30% 확률
+  { refundRate: 0.9, chance: 5 },     // 90% 환급: 5% 확률
+  { refundRate: 1.0, chance: 1 },     // 100% 환급: 1% 확률
+  { refundRate: 2.0, chance: 0.1 }    // 200% 환급 (잭팟): 0.1% 확률
+];
+
+/**
+ * 파괴 지원금 계산
+ * @param {number} totalSpent - 해당 인간에게 사용한 총 골드
+ * @returns {Object} { refundAmount, refundRate, isJackpot }
+ */
+function calculateDeathSupport(totalSpent) {
+  const roll = Math.random() * 100;
+  let cumulative = 0;
+
+  for (const tier of DEATH_SUPPORT_TABLE) {
+    cumulative += tier.chance;
+    if (roll < cumulative) {
+      return {
+        refundAmount: Math.floor(totalSpent * tier.refundRate),
+        refundRate: tier.refundRate * 100,
+        isJackpot: tier.refundRate >= 2.0
+      };
+    }
+  }
+
+  // 나머지 확률 (13.9%): 환급 없음
+  return {
+    refundAmount: 0,
+    refundRate: 0,
+    isJackpot: false
+  };
+}
 
 // 성장 성공 시 칭호/직업 변경 확률 (%)
 const TITLE_CHANGE_CHANCE = 20;  // 20% 확률로 칭호 변경
@@ -133,10 +171,12 @@ module.exports = {
   TITLE_CHANGE_CHANCE,
   JOB_CHANGE_CHANCE,
   SELL_PRICE_MULTIPLIER,
+  DEATH_SUPPORT_TABLE,
   getUpgradeInfo,
   calculateUpgradeResult,
   getSellPrice,
   shouldChangeTitle,
   shouldChangeJob,
+  calculateDeathSupport,
   formatGold
 };

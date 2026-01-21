@@ -11,6 +11,7 @@ const {
   getSellPrice,
   shouldChangeTitle,
   shouldChangeJob,
+  calculateDeathSupport,
   formatGold,
   UPGRADE_TABLE,
   MAX_LEVEL,
@@ -121,6 +122,7 @@ async function upgradeHuman(req, res) {
     user.gold -= upgradeInfo.cost;
     user.stats.totalAttempts += 1;
     user.stats.totalGoldSpent += upgradeInfo.cost;
+    user.human.totalSpentOnHuman = (user.human.totalSpentOnHuman || 0) + upgradeInfo.cost;
 
     // 성장 결과 계산
     const result = calculateUpgradeResult(human.level);
@@ -181,19 +183,34 @@ async function upgradeHuman(req, res) {
 
     } else if (result === 'death') {
       const oldHumanName = previousName;
+      const totalSpent = user.human.totalSpentOnHuman || 0;
+
+      // 파괴 지원금 계산
+      const deathSupport = calculateDeathSupport(totalSpent);
+      user.gold += deathSupport.refundAmount;
+
       user.handleDeath();
       const newHumanName = getHumanFullName(user.human);
+
+      // 파괴 지원금 메시지
+      let supportText = '';
+      if (deathSupport.isJackpot) {
+        supportText = `\n\n🎉🎉 잭팟! 🎉🎉\n💸 파괴 지원금: ${formatGold(deathSupport.refundAmount)} (${deathSupport.refundRate}%)`;
+      } else if (deathSupport.refundAmount > 0) {
+        supportText = `\n\n💸 파괴 지원금: ${formatGold(deathSupport.refundAmount)} (${deathSupport.refundRate}%)`;
+      } else {
+        supportText = '\n\n💸 파괴 지원금: 없음 (운이 없네요...)';
+      }
 
       text = `💀 인간이 사망했습니다...
 
 🪦 고인: ${oldHumanName}
+💰 투자금: ${formatGold(totalSpent)}${supportText}
 
 👤 새로운 인간이 도착했습니다!
 🏷️ ${newHumanName}
 
-💰 남은 골드: ${formatGold(user.gold)}
-
-😢 다음에는 더 좋은 인간이 오길...`;
+💰 남은 골드: ${formatGold(user.gold)}`;
 
       await user.save();
       const deathImage = getStatusImage('death', previousLevel);

@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema({
       category: { type: String, required: true },
       grade: { type: String, required: true },
       bonusRate: { type: Number, required: true }
+    },
+
+    // 현재 인간에게 사용한 총 골드 (파괴 지원금 계산용)
+    totalSpentOnHuman: {
+      type: Number,
+      default: 0
     }
   },
 
@@ -91,7 +97,8 @@ userSchema.methods.createNewHuman = function() {
       category: job.category,
       grade: job.grade,
       bonusRate: job.bonusRate
-    }
+    },
+    totalSpentOnHuman: 0
   };
 
   // 전설 등급 통계 업데이트
