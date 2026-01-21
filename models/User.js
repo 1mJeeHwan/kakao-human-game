@@ -59,7 +59,34 @@ const userSchema = new mongoose.Schema({
     totalTitleRerolls: { type: Number, default: 0 },
     totalJobRerolls: { type: Number, default: 0 },
     legendaryTitleCount: { type: Number, default: 0 },
-    legendaryJobCount: { type: Number, default: 0 }
+    legendaryJobCount: { type: Number, default: 0 },
+    jackpotCount: { type: Number, default: 0 },
+    totalHumansSold: { type: Number, default: 0 }
+  },
+
+  // 도감 시스템
+  collection: {
+    // 획득한 칭호 목록
+    titles: {
+      type: [String],
+      default: []
+    },
+    // 획득한 직업 목록
+    jobs: {
+      type: [String],
+      default: []
+    },
+    // 달성한 업적
+    achievements: {
+      type: [String],
+      default: []
+    },
+    // 보상 수령 여부
+    rewardsClaimed: {
+      titleComplete: { type: Boolean, default: false },
+      jobComplete: { type: Boolean, default: false },
+      allComplete: { type: Boolean, default: false }
+    }
   },
 
   createdAt: {
@@ -101,6 +128,10 @@ userSchema.methods.createNewHuman = function() {
     totalSpentOnHuman: 0
   };
 
+  // 도감에 추가
+  this.addTitleToCollection(title.name);
+  this.addJobToCollection(job.name);
+
   // 전설 등급 통계 업데이트
   if (title.grade === 'legendary') {
     this.stats.legendaryTitleCount += 1;
@@ -122,6 +153,9 @@ userSchema.methods.rerollTitle = function() {
     grade: newTitle.grade,
     bonusRate: newTitle.bonusRate
   };
+
+  // 도감에 추가
+  this.addTitleToCollection(newTitle.name);
 
   this.stats.totalTitleRerolls += 1;
 
@@ -146,6 +180,9 @@ userSchema.methods.rerollJob = function() {
     bonusRate: newJob.bonusRate
   };
 
+  // 도감에 추가
+  this.addJobToCollection(newJob.name);
+
   this.stats.totalJobRerolls += 1;
 
   if (newJob.grade === 'legendary') {
@@ -165,6 +202,39 @@ userSchema.methods.levelUp = function() {
   if (this.human.level > this.stats.maxLevel) {
     this.stats.maxLevel = this.human.level;
   }
+};
+
+/**
+ * 도감에 칭호 추가
+ */
+userSchema.methods.addTitleToCollection = function(titleName) {
+  if (!this.collection.titles.includes(titleName)) {
+    this.collection.titles.push(titleName);
+    return true; // 새로 추가됨
+  }
+  return false; // 이미 있음
+};
+
+/**
+ * 도감에 직업 추가
+ */
+userSchema.methods.addJobToCollection = function(jobName) {
+  if (!this.collection.jobs.includes(jobName)) {
+    this.collection.jobs.push(jobName);
+    return true; // 새로 추가됨
+  }
+  return false; // 이미 있음
+};
+
+/**
+ * 업적 추가
+ */
+userSchema.methods.addAchievement = function(achievementId) {
+  if (!this.collection.achievements.includes(achievementId)) {
+    this.collection.achievements.push(achievementId);
+    return true;
+  }
+  return false;
 };
 
 /**

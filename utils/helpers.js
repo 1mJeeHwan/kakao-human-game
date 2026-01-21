@@ -63,19 +63,29 @@ function createQuickReply(label, message) {
 const DEFAULT_QUICK_REPLIES = [
   createQuickReply('성장하기', '성장'),
   createQuickReply('판매하기', '판매'),
-  createQuickReply('확률표', '확률')
+  createQuickReply('도감', '도감'),
+  createQuickReply('기록', '기록')
 ];
 
 const UPGRADE_QUICK_REPLIES = [
   createQuickReply('계속 성장', '성장'),
   createQuickReply('판매하기', '판매'),
-  createQuickReply('상태 확인', '시작')
+  createQuickReply('상태 확인', '시작'),
+  createQuickReply('도감', '도감')
 ];
 
 const SELL_QUICK_REPLIES = [
   createQuickReply('성장하기', '성장'),
   createQuickReply('상태 확인', '시작'),
+  createQuickReply('도감', '도감'),
   createQuickReply('확률표', '확률')
+];
+
+const COLLECTION_QUICK_REPLIES = [
+  createQuickReply('보상받기', '보상'),
+  createQuickReply('기록', '기록'),
+  createQuickReply('상태 확인', '시작'),
+  createQuickReply('성장하기', '성장')
 ];
 
 /**
@@ -190,6 +200,7 @@ module.exports = {
   DEFAULT_QUICK_REPLIES,
   UPGRADE_QUICK_REPLIES,
   SELL_QUICK_REPLIES,
+  COLLECTION_QUICK_REPLIES,
   extractUserId,
   getGradeEmoji
 };

@@ -3,8 +3,8 @@
  */
 
 const User = require('../models/User');
-const { formatTitleInfo, GRADE_KOREAN: TITLE_GRADE_KOREAN } = require('../utils/titles');
-const { formatJobInfo, getFullJobName, GRADE_KOREAN: JOB_GRADE_KOREAN } = require('../utils/jobs');
+const { formatTitleInfo, GRADE_KOREAN: TITLE_GRADE_KOREAN, TITLES } = require('../utils/titles');
+const { formatJobInfo, getFullJobName, GRADE_KOREAN: JOB_GRADE_KOREAN, JOBS } = require('../utils/jobs');
 const {
   getUpgradeInfo,
   calculateUpgradeResult,
@@ -26,6 +26,7 @@ const {
   DEFAULT_QUICK_REPLIES,
   UPGRADE_QUICK_REPLIES,
   SELL_QUICK_REPLIES,
+  COLLECTION_QUICK_REPLIES,
   extractUserId,
   getGradeEmoji
 } = require('../utils/helpers');
@@ -189,6 +190,11 @@ async function upgradeHuman(req, res) {
       const deathSupport = calculateDeathSupport(totalSpent);
       user.gold += deathSupport.refundAmount;
 
+      // 잭팟 통계 업데이트
+      if (deathSupport.isJackpot) {
+        user.stats.jackpotCount += 1;
+      }
+
       user.handleDeath();
       const newHumanName = getHumanFullName(user.human);
 
@@ -278,6 +284,7 @@ async function sellHuman(req, res) {
     // 골드 추가 및 통계 업데이트
     user.gold += sellPrice;
     user.stats.totalGoldEarned += sellPrice;
+    user.stats.totalHumansSold += 1;
 
     // 새 캐릭터 생성
     user.createNewHuman();
@@ -353,9 +360,314 @@ async function getRates(req, res) {
   }
 }
 
+/**
+ * 도감 조회
+ */
+async function getCollection(req, res) {
+  try {
+    const userId = extractUserId(req.body);
+
+    if (!userId) {
+      return res.json(createKakaoResponse('유저 정보를 찾을 수 없습니다.'));
+    }
+
+    const user = await User.findOrCreate(userId);
+
+    // 전체 칭호/직업 수
+    const totalTitles = TITLES.length;
+    const totalJobs = JOBS.length;
+
+    // 수집한 칭호/직업 수
+    const collectedTitles = user.collection.titles.length;
+    const collectedJobs = user.collection.jobs.length;
+
+    // 수집률 계산
+    const titleRate = Math.round((collectedTitles / totalTitles) * 100);
+    const jobRate = Math.round((collectedJobs / totalJobs) * 100);
+    const totalRate = Math.round(((collectedTitles + collectedJobs) / (totalTitles + totalJobs)) * 100);
+
+    // 등급별 수집 현황 (칭호)
+    const titlesByGrade = {
+      legendary: TITLES.filter(t => t.grade === 'legendary'),
+      epic: TITLES.filter(t => t.grade === 'epic'),
+      rare: TITLES.filter(t => t.grade === 'rare'),
+      uncommon: TITLES.filter(t => t.grade === 'uncommon'),
+      common: TITLES.filter(t => t.grade === 'common')
+    };
+
+    // 등급별 수집 현황 (직업)
+    const jobsByGrade = {
+      legendary: JOBS.filter(j => j.grade === 'legendary'),
+      uncommon: JOBS.filter(j => j.grade === 'uncommon'),
+      rare: JOBS.filter(j => j.grade === 'rare'),
+      common: JOBS.filter(j => j.grade === 'common')
+    };
+
+    // 칭호 도감 텍스트
+    let titleText = '📖 칭호 도감\n━━━━━━━━━━━━━━';
+
+    for (const [grade, titles] of Object.entries(titlesByGrade)) {
+      const gradeKorean = TITLE_GRADE_KOREAN[grade] || grade;
+      const collected = titles.filter(t => user.collection.titles.includes(t.name));
+      const emoji = getGradeEmoji(grade);
+
+      titleText += `\n${emoji} ${gradeKorean}: ${collected.length}/${titles.length}`;
+
+      // 수집한 칭호 표시
+      const collectedNames = collected.map(t => t.name).join(', ');
+      const uncollectedCount = titles.length - collected.length;
+
+      if (collectedNames) {
+        titleText += `\n  ✓ ${collectedNames}`;
+      }
+      if (uncollectedCount > 0) {
+        titleText += `\n  ? ${uncollectedCount}개 미발견`;
+      }
+    }
+
+    // 직업 도감 텍스트
+    let jobText = '\n\n💼 직업 도감\n━━━━━━━━━━━━━━';
+
+    for (const [grade, jobs] of Object.entries(jobsByGrade)) {
+      const gradeKorean = JOB_GRADE_KOREAN[grade] || grade;
+      const collected = jobs.filter(j => user.collection.jobs.includes(j.name));
+      const emoji = getGradeEmoji(grade);
+
+      jobText += `\n${emoji} ${gradeKorean}: ${collected.length}/${jobs.length}`;
+
+      const collectedNames = collected.map(j => j.name).join(', ');
+      const uncollectedCount = jobs.length - collected.length;
+
+      if (collectedNames) {
+        jobText += `\n  ✓ ${collectedNames}`;
+      }
+      if (uncollectedCount > 0) {
+        jobText += `\n  ? ${uncollectedCount}개 미발견`;
+      }
+    }
+
+    // 보상 현황
+    let rewardText = '\n\n🎁 수집 보상\n━━━━━━━━━━━━━━';
+
+    const titleComplete = collectedTitles >= totalTitles;
+    const jobComplete = collectedJobs >= totalJobs;
+    const allComplete = titleComplete && jobComplete;
+
+    rewardText += `\n칭호 완성 (${titleRate}%): ${titleComplete ? (user.collection.rewardsClaimed.titleComplete ? '✓ 수령완료' : '🎁 수령가능!') : '미완성'}`;
+    rewardText += `\n직업 완성 (${jobRate}%): ${jobComplete ? (user.collection.rewardsClaimed.jobComplete ? '✓ 수령완료' : '🎁 수령가능!') : '미완성'}`;
+    rewardText += `\n전체 완성 (${totalRate}%): ${allComplete ? (user.collection.rewardsClaimed.allComplete ? '✓ 수령완료' : '🎁 수령가능!') : '미완성'}`;
+
+    if ((titleComplete && !user.collection.rewardsClaimed.titleComplete) ||
+        (jobComplete && !user.collection.rewardsClaimed.jobComplete) ||
+        (allComplete && !user.collection.rewardsClaimed.allComplete)) {
+      rewardText += '\n\n💡 "보상받기"를 입력하세요!';
+    }
+
+    const text = `📚 도감 현황
+━━━━━━━━━━━━━━━━━━
+📊 전체 수집률: ${totalRate}%
+🏷️ 칭호: ${collectedTitles}/${totalTitles} (${titleRate}%)
+💼 직업: ${collectedJobs}/${totalJobs} (${jobRate}%)
+${titleText}${jobText}${rewardText}`;
+
+    return res.json(createKakaoResponse(text, COLLECTION_QUICK_REPLIES));
+
+  } catch (error) {
+    console.error('getCollection 오류:', error);
+    return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
+  }
+}
+
+/**
+ * 도감 보상 수령
+ */
+async function claimReward(req, res) {
+  try {
+    const userId = extractUserId(req.body);
+
+    if (!userId) {
+      return res.json(createKakaoResponse('유저 정보를 찾을 수 없습니다.'));
+    }
+
+    const user = await User.findOrCreate(userId);
+
+    const totalTitles = TITLES.length;
+    const totalJobs = JOBS.length;
+    const collectedTitles = user.collection.titles.length;
+    const collectedJobs = user.collection.jobs.length;
+
+    const titleComplete = collectedTitles >= totalTitles;
+    const jobComplete = collectedJobs >= totalJobs;
+    const allComplete = titleComplete && jobComplete;
+
+    let rewardGold = 0;
+    let rewardText = '';
+
+    // 칭호 완성 보상 (100,000G)
+    if (titleComplete && !user.collection.rewardsClaimed.titleComplete) {
+      rewardGold += 100000;
+      user.collection.rewardsClaimed.titleComplete = true;
+      rewardText += '🏷️ 칭호 도감 완성! +100,000G\n';
+    }
+
+    // 직업 완성 보상 (150,000G)
+    if (jobComplete && !user.collection.rewardsClaimed.jobComplete) {
+      rewardGold += 150000;
+      user.collection.rewardsClaimed.jobComplete = true;
+      rewardText += '💼 직업 도감 완성! +150,000G\n';
+    }
+
+    // 전체 완성 보상 (500,000G)
+    if (allComplete && !user.collection.rewardsClaimed.allComplete) {
+      rewardGold += 500000;
+      user.collection.rewardsClaimed.allComplete = true;
+      rewardText += '🌟 전체 도감 완성! +500,000G\n';
+    }
+
+    if (rewardGold > 0) {
+      user.gold += rewardGold;
+      await user.save();
+
+      const text = `🎁 보상 수령 완료!
+━━━━━━━━━━━━━━━━━━
+${rewardText}
+💰 총 획득: ${formatGold(rewardGold)}
+💰 보유 골드: ${formatGold(user.gold)}`;
+
+      return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
+    } else {
+      const text = `❌ 수령할 보상이 없습니다!
+
+💡 도감을 완성하면 보상을 받을 수 있습니다.
+
+📊 현재 진행률
+- 칭호: ${collectedTitles}/${totalTitles}${titleComplete ? ' ✓' : ''}
+- 직업: ${collectedJobs}/${totalJobs}${jobComplete ? ' ✓' : ''}`;
+
+      return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
+    }
+
+  } catch (error) {
+    console.error('claimReward 오류:', error);
+    return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
+  }
+}
+
+/**
+ * 업데이트 공지
+ */
+async function getUpdates(req, res) {
+  try {
+    // 업데이트 내역 (최신순)
+    const updates = [
+      {
+        version: '1.2.0',
+        date: '2025.01.21',
+        changes: [
+          '📚 도감 시스템 추가',
+          '- 칭호/직업 수집 현황 확인',
+          '- 도감 완성 보상 추가',
+          '📢 업데이트 공지 기능 추가'
+        ]
+      },
+      {
+        version: '1.1.0',
+        date: '2025.01.20',
+        changes: [
+          '💀 파괴 지원금 시스템 추가',
+          '- 사망 시 투자금 일부 환급',
+          '- 잭팟 시 200% 환급!',
+          '⚔️ 10강부터 사망 시작',
+          '💰 7강부터 2배 판매가 보너스'
+        ]
+      },
+      {
+        version: '1.0.0',
+        date: '2025.01.19',
+        changes: [
+          '🎮 게임 출시!',
+          '- 인간 성장 시스템',
+          '- 칭호/직업 랜덤 변경',
+          '- 판매 시스템'
+        ]
+      }
+    ];
+
+    let text = '📢 업데이트 내역\n━━━━━━━━━━━━━━━━━━';
+
+    for (const update of updates) {
+      text += `\n\n📌 v${update.version} (${update.date})`;
+      for (const change of update.changes) {
+        text += `\n${change}`;
+      }
+    }
+
+    text += '\n\n━━━━━━━━━━━━━━━━━━\n💡 건의사항은 개발자에게 문의하세요!';
+
+    return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
+
+  } catch (error) {
+    console.error('getUpdates 오류:', error);
+    return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
+  }
+}
+
+/**
+ * 통계 조회
+ */
+async function getStats(req, res) {
+  try {
+    const userId = extractUserId(req.body);
+
+    if (!userId) {
+      return res.json(createKakaoResponse('유저 정보를 찾을 수 없습니다.'));
+    }
+
+    const user = await User.findOrCreate(userId);
+    const stats = user.stats;
+
+    const successRate = stats.totalAttempts > 0
+      ? Math.round((stats.successCount / stats.totalAttempts) * 100)
+      : 0;
+
+    const text = `📊 나의 기록
+━━━━━━━━━━━━━━━━━━
+🎮 플레이 기록
+- 총 시도: ${stats.totalAttempts}회
+- 성공: ${stats.successCount}회 (${successRate}%)
+- 실패: ${stats.failCount}회
+- 사망: ${stats.deathCount}회
+
+🏆 최고 기록
+- 최고 레벨: +${stats.maxLevel}
+- 판매한 인간: ${stats.totalHumansSold}명
+
+💰 재화 기록
+- 총 수입: ${formatGold(stats.totalGoldEarned)}
+- 총 지출: ${formatGold(stats.totalGoldSpent)}
+
+🎲 변이 기록
+- 칭호 변경: ${stats.totalTitleRerolls}회
+- 직업 변경: ${stats.totalJobRerolls}회
+- 전설 칭호: ${stats.legendaryTitleCount}회
+- 전설 직업: ${stats.legendaryJobCount}회
+- 잭팟 횟수: ${stats.jackpotCount}회`;
+
+    return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
+
+  } catch (error) {
+    console.error('getStats 오류:', error);
+    return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
+  }
+}
+
 module.exports = {
   startGame,
   upgradeHuman,
   sellHuman,
-  getRates
+  getRates,
+  getCollection,
+  claimReward,
+  getUpdates,
+  getStats
 };
