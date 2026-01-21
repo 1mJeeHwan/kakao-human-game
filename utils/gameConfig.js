@@ -8,26 +8,31 @@ const INITIAL_GOLD = 5000;
 // 최대 레벨
 const MAX_LEVEL = 15;
 
-// 성장 확률 테이블 (10강부터 파괴 시작)
-// 실패율: 0,1,2,4,8,16,32,48,50,55 + 10강부터 파괴 10%씩 증가
-// 비용 = 해당 레벨 판매가의 20%
+// 성장 확률 테이블
+// - 처음부터 실패/사망 확률 존재 (1%씩 시작)
+// - 5강 이후 점진적 증가
+// - 10강 이후 대폭 증가
+// - 성공 확률은 절대 0% 아님
+// - 비용 = 해당 레벨 판매가의 10%
 // success + death + fail = 100
 const UPGRADE_TABLE = [
-  { level: 0, success: 100, death: 0, fail: 0, cost: 40 },
-  { level: 1, success: 99, death: 0, fail: 1, cost: 80 },
-  { level: 2, success: 98, death: 0, fail: 2, cost: 160 },
-  { level: 3, success: 96, death: 0, fail: 4, cost: 320 },
-  { level: 4, success: 92, death: 0, fail: 8, cost: 640 },
-  { level: 5, success: 84, death: 0, fail: 16, cost: 1280 },
-  { level: 6, success: 68, death: 0, fail: 32, cost: 5120 },
-  { level: 7, success: 52, death: 0, fail: 48, cost: 20480 },
-  { level: 8, success: 50, death: 0, fail: 50, cost: 81920 },
-  { level: 9, success: 45, death: 0, fail: 55, cost: 327680 },
-  { level: 10, success: 30, death: 10, fail: 60, cost: 1310720 },
-  { level: 11, success: 15, death: 20, fail: 65, cost: 5242880 },
-  { level: 12, success: 0, death: 30, fail: 70, cost: 20971520 },
-  { level: 13, success: 0, death: 40, fail: 60, cost: 83886080 },
-  { level: 14, success: 0, death: 50, fail: 50, cost: 335544320 }
+  { level: 0, success: 98, death: 1, fail: 1, cost: 20 },
+  { level: 1, success: 96, death: 2, fail: 2, cost: 40 },
+  { level: 2, success: 93, death: 3, fail: 4, cost: 80 },
+  { level: 3, success: 89, death: 5, fail: 6, cost: 160 },
+  { level: 4, success: 84, death: 7, fail: 9, cost: 320 },
+  // 5강 이후 점진적 증가
+  { level: 5, success: 75, death: 10, fail: 15, cost: 640 },
+  { level: 6, success: 65, death: 15, fail: 20, cost: 2560 },
+  { level: 7, success: 55, death: 20, fail: 25, cost: 10240 },
+  { level: 8, success: 45, death: 25, fail: 30, cost: 40960 },
+  { level: 9, success: 35, death: 30, fail: 35, cost: 163840 },
+  // 10강 이후 대폭 증가
+  { level: 10, success: 25, death: 40, fail: 35, cost: 655360 },
+  { level: 11, success: 18, death: 50, fail: 32, cost: 2621440 },
+  { level: 12, success: 12, death: 60, fail: 28, cost: 10485760 },
+  { level: 13, success: 7, death: 70, fail: 23, cost: 41943040 },
+  { level: 14, success: 3, death: 80, fail: 17, cost: 167772160 }
 ];
 
 // 파괴 지원금 확률 테이블
