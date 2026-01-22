@@ -32,6 +32,8 @@ const {
   getGradeEmoji
 } = require('../utils/helpers');
 const { getJobImage, getStatusImage } = require('../utils/images');
+const { checkSpecialEnding } = require('../utils/specialEndings');
+const { checkAchievements, getAchievementProgress, formatAchievement, ACHIEVEMENTS } = require('../utils/achievements');
 
 /**
  * 게임 시작 / 상태 조회
@@ -228,8 +230,11 @@ async function upgradeHuman(req, res) {
       const oldHumanName = previousName;
       const totalSpent = user.human.totalSpentOnHuman || 0;
 
-      // 직업별 사망 메시지
-      const deathMsg = getDeathMessage(previousJobName);
+      // 특수 엔딩 체크
+      const specialEnding = checkSpecialEnding(user);
+
+      // 직업별 사망 메시지 (특수 엔딩이 있으면 특수 메시지 사용)
+      const deathMsg = specialEnding ? specialEnding.deathMessage : getDeathMessage(previousJobName);
 
       // 파괴 지원금 계산
       let deathSupport = calculateDeathSupport(totalSpent);
@@ -241,9 +246,6 @@ async function upgradeHuman(req, res) {
         deathSupport.refundRate *= Math.pow(2, doubleRefundCount);
       }
 
-      // 특수 능력: 잭팟 확률 2배 체크는 calculateDeathSupport에서 처리 필요
-      // (여기서는 간단히 잭팟 시 메시지만 처리)
-
       user.gold += deathSupport.refundAmount;
 
       // 잭팟 통계 업데이트
@@ -251,10 +253,11 @@ async function upgradeHuman(req, res) {
         user.stats.jackpotCount += 1;
       }
 
-      user.handleDeath();
+      // 사망 처리 (특수 엔딩 정보 전달)
+      const newHumanResult = user.handleDeath(specialEnding);
       const newHumanName = getHumanFullName(user.human);
 
-      // 파괴 지원금 재미있는 메시지
+      // 파괴 지원금 메시지
       const refundMsg = getRefundMessage(deathSupport.refundRate);
       let supportText = '';
       if (deathSupport.refundAmount > 0) {
@@ -263,12 +266,24 @@ async function upgradeHuman(req, res) {
         supportText = `\n\n${refundMsg}`;
       }
 
+      // 특수 엔딩 보너스 텍스트
+      let specialText = '';
+      if (specialEnding) {
+        specialText = `\n\n✨ ${specialEnding.flavor}`;
+        if (specialEnding.bonusGold > 0) {
+          specialText += `\n🎁 보너스 골드: +${formatGold(specialEnding.bonusGold)}`;
+        }
+        if (specialEnding.nextJob) {
+          specialText += `\n⚡ 직업 확정: ${specialEnding.nextJob}`;
+        }
+      }
+
       text = `💀 인간이 사망했습니다...
 
 🪦 ${deathMsg}
 
 고인: ${oldHumanName}
-💰 투자금: ${formatGold(totalSpent)}${supportText}
+💰 투자금: ${formatGold(totalSpent)}${supportText}${specialText}
 
 👤 새로운 인간이 도착했습니다!
 🏷️ ${newHumanName}
@@ -746,6 +761,7 @@ async function getHelp(req, res) {
 📚 도감 & 기록
 ━━━━━━━━━━━━━━
 • 도감 - 수집 현황 보기
+• 업적 - 업적 현황 보기
 • 보상 - 도감 보상 받기
 • 기록 - 플레이 통계 보기
 
@@ -765,6 +781,102 @@ async function getHelp(req, res) {
   }
 }
 
+/**
+ * 업적 조회
+ */
+async function getAchievementsView(req, res) {
+  try {
+    const userId = extractUserId(req.body);
+
+    if (!userId) {
+      return res.json(createKakaoResponse('유저 정보를 찾을 수 없습니다.'));
+    }
+
+    const user = await User.findOrCreate(userId);
+    const progress = getAchievementProgress(user);
+    const currentAchievements = user.collection?.achievements || [];
+
+    // 최근 달성 업적 3개
+    const recentAchievements = currentAchievements
+      .slice(-3)
+      .reverse()
+      .map(id => ACHIEVEMENTS.find(a => a.id === id))
+      .filter(a => a)
+      .map(a => `${a.grade.emoji} ${a.name}`);
+
+    // 등급별 진행도
+    const gradeProgress = Object.entries(progress.byGrade)
+      .map(([grade, data]) => `${data.emoji} ${data.completed}/${data.total}`)
+      .join(' | ');
+
+    // 다음 달성 가능 업적 힌트
+    const nextAchievements = ACHIEVEMENTS
+      .filter(a => !currentAchievements.includes(a.id))
+      .slice(0, 3)
+      .map(a => `⬜ ${a.grade.emoji} ${a.name}: ${a.description}`);
+
+    const text = `🏆 업적 현황
+━━━━━━━━━━━━━━━━━━
+📊 전체 진행도: ${progress.completed}/${progress.total} (${progress.percentage}%)
+
+${gradeProgress}
+
+${recentAchievements.length > 0 ? `✨ 최근 달성:\n${recentAchievements.map(a => `   ${a}`).join('\n')}` : '아직 달성한 업적이 없습니다.'}
+
+📋 다음 목표:
+${nextAchievements.join('\n')}
+
+💡 강화, 판매, 수집 등 다양한 활동으로
+   업적을 달성하고 보상을 받으세요!`;
+
+    return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
+
+  } catch (error) {
+    console.error('getAchievementsView 오류:', error);
+    return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
+  }
+}
+
+/**
+ * 업적 체크 및 보상 지급 (내부 함수)
+ * @param {Object} user - 유저 객체
+ * @param {Object} context - 추가 컨텍스트
+ * @returns {Array} 새로 달성한 업적 목록
+ */
+async function processAchievements(user, context = {}) {
+  const newAchievements = checkAchievements(user, context);
+
+  if (newAchievements.length === 0) {
+    return [];
+  }
+
+  // 업적 추가 및 보상 지급
+  for (const achievement of newAchievements) {
+    if (!user.collection.achievements.includes(achievement.id)) {
+      user.collection.achievements.push(achievement.id);
+      user.gold += achievement.reward;
+      user.stats.totalGoldEarned += achievement.reward;
+    }
+  }
+
+  return newAchievements;
+}
+
+/**
+ * 업적 달성 메시지 생성
+ * @param {Array} achievements - 달성한 업적 목록
+ * @returns {string} 메시지
+ */
+function formatNewAchievements(achievements) {
+  if (achievements.length === 0) return '';
+
+  const achievementTexts = achievements.map(a =>
+    `🏆 ${a.grade.emoji} ${a.name} 달성! (+${a.reward}G)`
+  );
+
+  return '\n\n' + achievementTexts.join('\n');
+}
+
 module.exports = {
   startGame,
   upgradeHuman,
@@ -774,5 +886,8 @@ module.exports = {
   claimReward,
   getUpdates,
   getStats,
-  getHelp
+  getHelp,
+  getAchievementsView,
+  processAchievements,
+  formatNewAchievements
 };

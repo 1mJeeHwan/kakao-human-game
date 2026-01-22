@@ -57,6 +57,27 @@ const userSchema = new mongoose.Schema({
         used: { type: Boolean, default: false }
       }],
       default: []
+    },
+
+    // 특수 엔딩으로 인한 다음 직업 고정
+    nextJobLocked: {
+      name: { type: String, default: null },
+      reason: { type: String, default: null }
+    }
+  },
+
+  // 특수 엔딩 기록
+  specialEndings: {
+    // 발동된 특수 엔딩 ID 목록
+    triggered: {
+      type: [String],
+      default: []
+    },
+    // 마지막 특수 엔딩
+    lastEnding: {
+      id: { type: String, default: null },
+      message: { type: String, default: null },
+      triggeredAt: { type: Date, default: null }
     }
   },
 
@@ -78,7 +99,8 @@ const userSchema = new mongoose.Schema({
     legendaryTitleCount: { type: Number, default: 0 },
     legendaryJobCount: { type: Number, default: 0 },
     jackpotCount: { type: Number, default: 0 },
-    totalHumansSold: { type: Number, default: 0 }
+    totalHumansSold: { type: Number, default: 0 },
+    specialEndingCount: { type: Number, default: 0 }
   },
 
   // 도감 시스템
@@ -127,11 +149,24 @@ userSchema.index({ lastPlayedAt: -1 });  // 비활성 유저 정리용
 userSchema.index({ createdAt: 1 });      // 통계용
 
 /**
- * 새 캐릭터 생성 (랜덤 칭호 + 직업)
+ * 새 캐릭터 생성 (랜덤 칭호 + 직업, 또는 특수 엔딩으로 고정된 직업)
+ * @param {string|null} lockedJobName - 특수 엔딩으로 고정된 직업 이름
  */
-userSchema.methods.createNewHuman = function() {
+userSchema.methods.createNewHuman = function(lockedJobName = null) {
   const title = rollTitle();
-  const job = rollJob();
+
+  // 직업 결정: 고정된 직업이 있으면 사용, 없으면 랜덤
+  let job;
+  if (lockedJobName) {
+    const { getJobByName } = require('../utils/specialEndings');
+    job = getJobByName(lockedJobName);
+    if (!job) {
+      // 고정 직업을 찾지 못하면 랜덤으로
+      job = rollJob();
+    }
+  } else {
+    job = rollJob();
+  }
 
   // 초기 능력 설정
   const initialAbilities = [];
@@ -156,7 +191,8 @@ userSchema.methods.createNewHuman = function() {
     },
     totalSpentOnHuman: 0,
     obtainedTitles: [title.name],
-    abilities: initialAbilities
+    abilities: initialAbilities,
+    nextJobLocked: { name: null, reason: null }
   };
 
   // 도감에 추가
@@ -170,6 +206,8 @@ userSchema.methods.createNewHuman = function() {
   if (job.grade === 'legendary') {
     this.stats.legendaryJobCount += 1;
   }
+
+  return { title, job, wasLocked: !!lockedJobName };
 };
 
 /**
@@ -287,10 +325,46 @@ userSchema.methods.addAchievement = function(achievementId) {
 
 /**
  * 사망 처리 (새 캐릭터 생성)
+ * @param {Object|null} specialEnding - 특수 엔딩 정보
+ * @returns {Object} 새 캐릭터 정보
  */
-userSchema.methods.handleDeath = function() {
+userSchema.methods.handleDeath = function(specialEnding = null) {
   this.stats.deathCount += 1;
-  this.createNewHuman();
+
+  let lockedJobName = null;
+
+  // 특수 엔딩 처리
+  if (specialEnding) {
+    this.stats.specialEndingCount += 1;
+
+    // 엔딩 기록
+    if (!this.specialEndings) {
+      this.specialEndings = { triggered: [], lastEnding: {} };
+    }
+    if (!this.specialEndings.triggered.includes(specialEnding.id)) {
+      this.specialEndings.triggered.push(specialEnding.id);
+    }
+    this.specialEndings.lastEnding = {
+      id: specialEnding.id,
+      message: specialEnding.deathMessage,
+      triggeredAt: new Date()
+    };
+
+    // 보너스 골드
+    if (specialEnding.bonusGold) {
+      this.gold += specialEnding.bonusGold;
+    }
+
+    // 골드 유지 비율
+    if (specialEnding.goldMultiplier) {
+      this.gold += Math.floor(this.gold * specialEnding.goldMultiplier);
+    }
+
+    // 다음 직업 고정
+    lockedJobName = specialEnding.nextJob;
+  }
+
+  return this.createNewHuman(lockedJobName);
 };
 
 /**

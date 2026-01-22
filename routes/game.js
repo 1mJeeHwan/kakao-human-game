@@ -14,7 +14,8 @@ const {
   claimReward,
   getUpdates,
   getStats,
-  getHelp
+  getHelp,
+  getAchievementsView
 } = require('../controllers/gameController');
 
 // 게임 시작 / 상태 조회
@@ -44,6 +45,9 @@ router.post('/stats', getStats);
 // 도움말 (챗봇)
 router.post('/help', getHelp);
 
+// 업적 조회
+router.post('/achievements', getAchievementsView);
+
 // 게임 정보 웹페이지 (GET) - 비용표, 칭호표, 직업표
 router.get('/info', (req, res) => {
   const { UPGRADE_TABLE } = require('../utils/gameConfig');
@@ -53,7 +57,7 @@ router.get('/info', (req, res) => {
   // 판매가 계산 함수
   const getSellPrice = (level) => {
     if (level === 0) return 0;
-    const SELL_PRICE_MULTIPLIER = 100;
+    const SELL_PRICE_MULTIPLIER = 10;  // 10배 감소됨
     const DEATH_START_LEVEL = 7;
     if (level < DEATH_START_LEVEL) {
       return Math.pow(2, level) * SELL_PRICE_MULTIPLIER;
@@ -216,7 +220,7 @@ router.get('/info', (req, res) => {
         <div class="stat-label">최대 레벨</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">5,000G</div>
+        <div class="stat-value">500G</div>
         <div class="stat-label">시작 골드</div>
       </div>
     </div>
@@ -294,9 +298,9 @@ router.get('/info', (req, res) => {
           <tr><th>조건</th><th>보상</th></tr>
         </thead>
         <tbody>
-          <tr><td>칭호 도감 완성</td><td>100,000G</td></tr>
-          <tr><td>직업 도감 완성</td><td>150,000G</td></tr>
-          <tr><td>전체 도감 완성</td><td>500,000G</td></tr>
+          <tr><td>칭호 도감 완성</td><td>10,000G</td></tr>
+          <tr><td>직업 도감 완성</td><td>15,000G</td></tr>
+          <tr><td>전체 도감 완성</td><td>50,000G</td></tr>
         </tbody>
       </table>
     </div>
