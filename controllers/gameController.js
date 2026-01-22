@@ -239,11 +239,14 @@ async function upgradeHuman(req, res) {
         effectsText += `\n- 능력: ${abilityList}`;
       }
 
+      const totalSpentSuccess = user.human.totalSpentOnHuman || 0;
+
       text = `✨ 성장 성공! ✨
 
 👤 ${newName}
 
 💰 사용: ${formatGold(actualCost)}${costDiscountText}
+💰 누적 투자: ${formatGold(totalSpentSuccess)}
 💰 남은 골드: ${formatGold(user.gold)}
 💵 현재 판매가: ${formatGold(sellPrice)}${effectsText}${changeText}${nextInfoText}`;
 
@@ -351,12 +354,14 @@ async function upgradeHuman(req, res) {
       }
 
       const sellPrice = getSellPrice(human.level, human.title.bonusRate, user.human.job.bonusRate);
+      const totalSpentFail = user.human.totalSpentOnHuman || 0;
 
       text = `❌ 성장 실패!
 
 👤 ${getHumanFullName(user.human)} (유지)
 
 💰 사용: ${formatGold(actualCost)}${costDiscountText}
+💰 누적 투자: ${formatGold(totalSpentFail)}
 💰 남은 골드: ${formatGold(user.gold)}
 💵 현재 판매가: ${formatGold(sellPrice)}${jobLossText}
 
