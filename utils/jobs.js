@@ -7,7 +7,8 @@ const JOB_GRADES = {
   COMMON: 'common',
   UNCOMMON: 'uncommon',
   RARE: 'rare',
-  LEGENDARY: 'legendary'
+  LEGENDARY: 'legendary',
+  ANIMAL: 'animal'  // 특수 등급: 동물
 };
 
 const JOB_CATEGORIES = {
@@ -17,21 +18,24 @@ const JOB_CATEGORIES = {
   ENTERTAINMENT: 'entertainment',
   FANTASY: 'fantasy',
   SPECIAL: 'special',
-  UNEMPLOYED: 'unemployed'
+  UNEMPLOYED: 'unemployed',
+  ANIMAL: 'animal'
 };
 
 const GRADE_KOREAN = {
   [JOB_GRADES.COMMON]: '일반',
   [JOB_GRADES.UNCOMMON]: '고급',
   [JOB_GRADES.RARE]: '희귀',
-  [JOB_GRADES.LEGENDARY]: '전설'
+  [JOB_GRADES.LEGENDARY]: '전설',
+  [JOB_GRADES.ANIMAL]: '동물'
 };
 
 const GRADE_EMOJI = {
   [JOB_GRADES.COMMON]: '',
   [JOB_GRADES.UNCOMMON]: '🔹',
   [JOB_GRADES.RARE]: '✨',
-  [JOB_GRADES.LEGENDARY]: '🌟'
+  [JOB_GRADES.LEGENDARY]: '🌟',
+  [JOB_GRADES.ANIMAL]: '🐾'
 };
 
 // 직업 목록 (총 50개+)
@@ -92,7 +96,19 @@ const JOBS = [
   { name: '암살자', category: JOB_CATEGORIES.SPECIAL, grade: JOB_GRADES.LEGENDARY, bonusRate: 0.6 },
   { name: '현자', category: JOB_CATEGORIES.SPECIAL, grade: JOB_GRADES.LEGENDARY, bonusRate: 0.6 },
   { name: '드래곤슬레이어', category: JOB_CATEGORIES.FANTASY, grade: JOB_GRADES.LEGENDARY, bonusRate: 0.6 },
-  { name: '대부호', category: JOB_CATEGORIES.SPECIAL, grade: JOB_GRADES.LEGENDARY, bonusRate: 0.6 }
+  { name: '대부호', category: JOB_CATEGORIES.SPECIAL, grade: JOB_GRADES.LEGENDARY, bonusRate: 0.6 },
+
+  // ========== 동물 (5% - 특수) ==========
+  { name: '강아지', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '고양이', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '토끼', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '햄스터', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '펭귄', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '판다', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '여우', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '곰', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '늑대', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '사자', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 }
 ];
 
 // 등급별 확률
@@ -184,6 +200,57 @@ const JOB_LOSS_MESSAGES = {
     '마력이 사라졌습니다...',
     '금지 마법 사용으로 자격 박탈...',
     '마탑이 무너져 실직...'
+  ],
+  // 동물 직업 상실 메시지
+  '강아지': [
+    '주인이 이사를 가버렸습니다...',
+    '산책 중 길을 잃었습니다...',
+    '유기견이 되었습니다...'
+  ],
+  '고양이': [
+    '집사가 파산했습니다...',
+    '더 좋은 집을 찾아 떠났습니다...',
+    '길고양이로 돌아갔습니다...'
+  ],
+  '토끼': [
+    '당근이 다 떨어졌습니다...',
+    '토끼굴에서 쫓겨났습니다...',
+    '농장에서 탈출했습니다...'
+  ],
+  '햄스터': [
+    '쳇바퀴가 고장났습니다...',
+    '케이지 문이 열렸습니다...',
+    '해바라기씨가 바닥났습니다...'
+  ],
+  '펭귄': [
+    '빙하가 녹아버렸습니다...',
+    '무리에서 이탈했습니다...',
+    '동물원이 폐업했습니다...'
+  ],
+  '판다': [
+    '대나무 숲이 사라졌습니다...',
+    '중국으로 송환되었습니다...',
+    '멸종위기로 보호구역행...'
+  ],
+  '여우': [
+    '사냥꾼에게 쫓기는 중...',
+    '숲에서 추방당했습니다...',
+    '구미호 의혹으로 쫓겨남...'
+  ],
+  '곰': [
+    '동면에서 못 깨어났습니다...',
+    '꿀을 훔치다 걸렸습니다...',
+    '산에서 내려왔다가 포획...'
+  ],
+  '늑대': [
+    '무리에서 추방당했습니다...',
+    '양치기에게 쫓겼습니다...',
+    '혼자가 되었습니다...'
+  ],
+  '사자': [
+    '왕위를 빼앗겼습니다...',
+    '사바나에서 추방당했습니다...',
+    '동물원에 갇혔습니다...'
   ]
 };
 
@@ -201,12 +268,22 @@ const DEFAULT_JOB_LOSS_MESSAGES = [
  */
 function rollJob() {
   const roll = Math.random() * 100;
+
+  // 5% 확률로 동물 직업
+  if (roll < 5) {
+    const animalJobs = JOBS.filter(j => j.grade === JOB_GRADES.ANIMAL);
+    const randomIndex = Math.floor(Math.random() * animalJobs.length);
+    return { ...animalJobs[randomIndex] };
+  }
+
+  // 나머지 95%는 기존 확률 (일반 50%, 고급 30%, 희귀 15%, 전설 5% → 95% 기준으로 재계산)
+  const adjustedRoll = (roll - 5) / 95 * 100;  // 5~100을 0~100으로 변환
   let selectedGrade;
   let cumulative = 0;
 
   for (const [grade, probability] of Object.entries(GRADE_PROBABILITIES)) {
     cumulative += probability;
-    if (roll < cumulative) {
+    if (adjustedRoll < cumulative) {
       selectedGrade = grade;
       break;
     }

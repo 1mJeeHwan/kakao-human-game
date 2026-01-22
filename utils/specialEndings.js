@@ -13,7 +13,8 @@ const ENDING_TYPES = {
   LEVEL_BASED: 'level_based', // 레벨 기반
   GOLD_BASED: 'gold_based',   // 골드 기반
   COMPLEX: 'complex',         // 복합 조건
-  MILESTONE: 'milestone'      // 마일스톤 (사망 횟수 등)
+  MILESTONE: 'milestone',     // 마일스톤 (사망 횟수 등)
+  ANIMAL: 'animal'            // 동물 직업 전용
 };
 
 /**
@@ -428,6 +429,98 @@ const SPECIAL_ENDINGS = [
     flavor: '용의 힘이 새로운 형태로!'
   },
 
+  // ========== 동물 직업 전용 엔딩 ==========
+  {
+    id: 'dog_loyalty',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 25,
+    condition: (user) => user.human.job.name === '강아지',
+    deathMessage: '🐕 충성스러운 영혼이 새로운 주인을 찾습니다...',
+    nextJob: '기사',
+    flavor: '충성심이 기사도로 승화됩니다!'
+  },
+  {
+    id: 'cat_nine_lives',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 30,
+    condition: (user) => user.human.job.name === '고양이',
+    deathMessage: '🐱 9개의 목숨 중 하나를 사용했습니다...',
+    nextJob: 'RANDOM_RARE',
+    flavor: '남은 목숨으로 새 인생을!'
+  },
+  {
+    id: 'rabbit_speed',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 20,
+    condition: (user) => user.human.job.name === '토끼',
+    deathMessage: '🐰 빠른 발로 다음 생으로 뛰어갑니다...',
+    nextJob: '모험가',
+    flavor: '달리기는 계속됩니다!'
+  },
+  {
+    id: 'hamster_wheel',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 20,
+    condition: (user) => user.human.job.name === '햄스터',
+    deathMessage: '🐹 쳇바퀴를 돌다 우주의 진리를 깨달았습니다...',
+    nextJob: '연구원',
+    flavor: '무한 반복 속에서 지혜를!'
+  },
+  {
+    id: 'penguin_wisdom',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 25,
+    condition: (user) => user.human.job.name === '펭귄',
+    deathMessage: '🐧 남극의 신비를 품고 돌아옵니다...',
+    nextJob: '현자',
+    flavor: '극한의 환경이 현자를 만듭니다!'
+  },
+  {
+    id: 'panda_fame',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 25,
+    condition: (user) => user.human.job.name === '판다',
+    deathMessage: '🐼 귀여움으로 세상을 정복합니다...',
+    nextJob: '배우',
+    flavor: '타고난 스타성!'
+  },
+  {
+    id: 'fox_nine_tails',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 35,
+    condition: (user) => user.human.job.name === '여우',
+    deathMessage: '🦊 꼬리 9개를 모아 구미호로 진화합니다...',
+    nextJob: '대마법사',
+    flavor: '천년의 마력이 깨어납니다!'
+  },
+  {
+    id: 'bear_warrior',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 20,
+    condition: (user) => user.human.job.name === '곰',
+    deathMessage: '🐻 산의 왕이 인간계로 내려옵니다...',
+    nextJob: '전사',
+    flavor: '야생의 힘이 전장을 흔듭니다!'
+  },
+  {
+    id: 'wolf_pack',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 25,
+    condition: (user) => user.human.job.name === '늑대',
+    deathMessage: '🐺 달빛 아래 새로운 무리를 찾습니다...',
+    nextJob: '용병',
+    flavor: '무리의 본능이 팀을 이끕니다!'
+  },
+  {
+    id: 'lion_king',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 40,
+    condition: (user) => user.human.job.name === '사자',
+    deathMessage: '🦁 정글의 왕이 인간 세계를 정복합니다...',
+    nextJob: '대부호',
+    flavor: '왕은 어디서든 왕입니다!'
+  },
+
   // ========== 마일스톤 (사망 횟수 기반) ==========
   {
     id: 'first_death',
@@ -570,11 +663,9 @@ function processEnding(ending, user) {
  * @returns {Object|null} 직업 정보
  */
 function getJobByName(jobName) {
-  for (const category in JOBS) {
-    const job = JOBS[category].find(j => j.name === jobName);
-    if (job) {
-      return { ...job, category };
-    }
+  const job = JOBS.find(j => j.name === jobName);
+  if (job) {
+    return { ...job };
   }
   return null;
 }

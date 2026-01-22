@@ -4,7 +4,7 @@
 
 const User = require('../models/User');
 const { formatTitleInfo, GRADE_KOREAN: TITLE_GRADE_KOREAN, TITLES, SPECIAL_ABILITIES, ABILITY_DESCRIPTIONS } = require('../utils/titles');
-const { formatJobInfo, getFullJobName, GRADE_KOREAN: JOB_GRADE_KOREAN, JOBS, shouldLoseJob, getJobLossMessage, getUnemployedJob } = require('../utils/jobs');
+const { formatJobInfo, getFullJobName, GRADE_KOREAN: JOB_GRADE_KOREAN, JOBS, shouldLoseJob, getJobLossMessage, getUnemployedJob, JOB_GRADES } = require('../utils/jobs');
 const { getDeathMessage, getRefundMessage } = require('../utils/deathMessages');
 const {
   getUpgradeInfo,
@@ -193,7 +193,16 @@ async function upgradeHuman(req, res) {
         const { oldJob, newJob } = user.rerollJob();
         const newGradeKorean = JOB_GRADE_KOREAN[newJob.grade];
         const newBonus = Math.round(newJob.bonusRate * 100);
-        changeText += `\n\n🎲 직업이 변경되었습니다!\n${oldJob} → ${newJob.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newJob.grade)}`;
+
+        // 특수 직업 축하 문구
+        let jobCelebration = '';
+        if (newJob.grade === JOB_GRADES.ANIMAL) {
+          jobCelebration = '\n\n🐾🐾🐾 동물 직업 등장! 🐾🐾🐾';
+        } else if (newJob.grade === JOB_GRADES.LEGENDARY) {
+          jobCelebration = '\n\n🌟🌟🌟 전설 직업 등장! 🌟🌟🌟';
+        }
+
+        changeText += `${jobCelebration}\n\n🎲 직업이 변경되었습니다!\n${oldJob} → ${newJob.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newJob.grade)}`;
       }
 
       const newName = getHumanFullName(user.human);
@@ -269,9 +278,24 @@ async function upgradeHuman(req, res) {
       // 특수 엔딩 텍스트
       let specialText = '';
       if (specialEnding) {
-        specialText = `\n\n✨ ${specialEnding.flavor}`;
+        specialText = `
+
+🎊🎊🎊 특수 엔딩 발동! 🎊🎊🎊
+━━━━━━━━━━━━━━━━━━
+✨ ${specialEnding.flavor}`;
         if (specialEnding.nextJob) {
-          specialText += `\n⚡ 직업 확정: ${specialEnding.nextJob}`;
+          specialText += `\n⚡ 다음 직업 확정: ${specialEnding.nextJob}`;
+        }
+        specialText += '\n━━━━━━━━━━━━━━━━━━';
+      }
+
+      // 새 인간의 특수 직업 축하 문구
+      let newJobCelebration = '';
+      if (!specialEnding) {  // 특수 엔딩이 아닐 때만 (특수 엔딩은 이미 축하 문구 있음)
+        if (user.human.job.grade === JOB_GRADES.ANIMAL) {
+          newJobCelebration = '\n🐾🐾🐾 동물 직업 등장! 🐾🐾🐾';
+        } else if (user.human.job.grade === JOB_GRADES.LEGENDARY) {
+          newJobCelebration = '\n🌟🌟🌟 전설 직업 등장! 🌟🌟🌟';
         }
       }
 
@@ -282,7 +306,7 @@ async function upgradeHuman(req, res) {
 고인: ${oldHumanName}
 💰 투자금: ${formatGold(totalSpent)}${supportText}${specialText}
 
-👤 새로운 인간이 도착했습니다!
+👤 새로운 인간이 도착했습니다!${newJobCelebration}
 🏷️ ${newHumanName}
 
 💰 남은 골드: ${formatGold(user.gold)}`;
@@ -369,6 +393,14 @@ async function sellHuman(req, res) {
     user.createNewHuman();
     const newHumanName = getHumanFullName(user.human);
 
+    // 새 인간의 특수 직업 축하 문구
+    let newJobCelebration = '';
+    if (user.human.job.grade === JOB_GRADES.ANIMAL) {
+      newJobCelebration = '\n🐾🐾🐾 동물 직업 등장! 🐾🐾🐾';
+    } else if (user.human.job.grade === JOB_GRADES.LEGENDARY) {
+      newJobCelebration = '\n🌟🌟🌟 전설 직업 등장! 🌟🌟🌟';
+    }
+
     const text = `💰 판매 완료!
 ━━━━━━━━━━━━━━━━━━
 🪦 판매한 인간
@@ -383,7 +415,7 @@ ${soldHumanName}
 
 💰 보유 골드: ${formatGold(user.gold)}
 
-👤 새로운 인간이 도착!
+👤 새로운 인간이 도착!${newJobCelebration}
 🏷️ ${newHumanName}`;
 
     const soldLevel = human.level;
