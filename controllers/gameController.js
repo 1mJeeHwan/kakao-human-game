@@ -55,13 +55,21 @@ async function startGame(req, res) {
     const titleBonus = Math.round(human.title.bonusRate * 100);
     const jobBonus = Math.round(human.job.bonusRate * 100);
 
+    // 보유 능력 목록
+    const activeAbilities = user.getActiveAbilities();
+    let abilitiesText = '';
+    if (activeAbilities.length > 0) {
+      const abilityNames = activeAbilities.map(a => ABILITY_DESCRIPTIONS[a] || a).join('\n  ');
+      abilitiesText = `\n\n✨ 보유 능력 (${activeAbilities.length}개)\n  ${abilityNames}`;
+    }
+
     const text = `👤 나의 인간
 ━━━━━━━━━━━━━━━━━━
 🏷️ ${humanName}
 
 📊 수식어 정보
 - 칭호: ${human.title.name} (${titleGradeKorean} +${titleBonus}%) ${getGradeEmoji(human.title.grade)}
-- 직업: ${human.job.name} (${jobGradeKorean} +${jobBonus}%) ${getGradeEmoji(human.job.grade)}
+- 직업: ${human.job.name} (${jobGradeKorean} +${jobBonus}%) ${getGradeEmoji(human.job.grade)}${abilitiesText}
 
 💰 보유 골드: ${formatGold(user.gold)}
 💵 판매 가격: ${formatGold(sellPrice)}
@@ -108,12 +116,13 @@ async function upgradeHuman(req, res) {
 
     const upgradeInfo = getUpgradeInfo(human.level);
 
-    // 특수 능력: 비용 할인 체크
+    // 특수 능력: 비용 할인 체크 (누적 시스템)
     let actualCost = upgradeInfo.cost;
     let costDiscountText = '';
-    if (human.title.special === SPECIAL_ABILITIES.COST_DOWN && !human.title.specialUsed) {
+    if (user.hasAbility(SPECIAL_ABILITIES.COST_DOWN)) {
       actualCost = Math.floor(upgradeInfo.cost * 0.5);
       costDiscountText = ' (💸 50% 할인!)';
+      user.useAbility(SPECIAL_ABILITIES.COST_DOWN);
     }
 
     // 골드 부족 체크
@@ -134,25 +143,23 @@ async function upgradeHuman(req, res) {
     user.stats.totalGoldSpent += actualCost;
     user.human.totalSpentOnHuman = (user.human.totalSpentOnHuman || 0) + actualCost;
 
-    // 특수 능력: 성공률 보정
-    let successBonus = 0;
-    if (human.title.special === SPECIAL_ABILITIES.LUCK_UP) {
-      successBonus = 5;
-    }
+    // 특수 능력: 성공률 보정 (누적 - 행운 능력 개수 x 5%)
+    const luckCount = user.countAbility(SPECIAL_ABILITIES.LUCK_UP);
+    let successBonus = luckCount * 5;
 
     // 성장 결과 계산 (성공률 보정 적용)
     let result = calculateUpgradeResult(human.level);
 
-    // 특수 능력: 실패를 성공으로 (1회)
-    if (result === 'fail' && human.title.special === SPECIAL_ABILITIES.FAIL_TO_SUCCESS && !human.title.specialUsed) {
+    // 특수 능력: 실패를 성공으로 (1회, 누적 시스템)
+    if (result === 'fail' && user.hasAbility(SPECIAL_ABILITIES.FAIL_TO_SUCCESS)) {
       result = 'success';
-      user.human.title.specialUsed = true;
+      user.useAbility(SPECIAL_ABILITIES.FAIL_TO_SUCCESS);
     }
 
-    // 특수 능력: 사망 방지 (1회)
-    if (result === 'death' && human.title.special === SPECIAL_ABILITIES.DEATH_PROTECT && !human.title.specialUsed) {
+    // 특수 능력: 사망 방지 (1회, 누적 시스템)
+    if (result === 'death' && user.hasAbility(SPECIAL_ABILITIES.DEATH_PROTECT)) {
       result = 'fail';
-      user.human.title.specialUsed = true;
+      user.useAbility(SPECIAL_ABILITIES.DEATH_PROTECT);
     }
 
     const previousLevel = human.level;
@@ -168,12 +175,14 @@ async function upgradeHuman(req, res) {
       let changeText = '';
 
       if (shouldChangeTitle()) {
-        const { oldTitle, newTitle } = user.rerollTitle();
+        const { oldTitle, newTitle, isNewTitle, abilityAdded } = user.rerollTitle();
         const newGradeKorean = TITLE_GRADE_KOREAN[newTitle.grade];
         const newBonus = Math.round(newTitle.bonusRate * 100);
         let specialText = '';
-        if (newTitle.special) {
-          specialText = `\n  ${ABILITY_DESCRIPTIONS[newTitle.special]}`;
+        if (abilityAdded && newTitle.special) {
+          specialText = `\n  🆕 능력 획득! ${ABILITY_DESCRIPTIONS[newTitle.special]}`;
+        } else if (!isNewTitle && newTitle.special) {
+          specialText = `\n  (이미 보유한 칭호 - 능력 추가 없음)`;
         }
         changeText += `\n\n🎲 칭호가 변경되었습니다!\n${oldTitle} → ${newTitle.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newTitle.grade)}${specialText}`;
       }
@@ -225,10 +234,11 @@ async function upgradeHuman(req, res) {
       // 파괴 지원금 계산
       let deathSupport = calculateDeathSupport(totalSpent);
 
-      // 특수 능력: 파괴 지원금 2배
-      if (human.title.special === SPECIAL_ABILITIES.DOUBLE_REFUND) {
-        deathSupport.refundAmount *= 2;
-        deathSupport.refundRate *= 2;
+      // 특수 능력: 파괴 지원금 2배 (누적 시스템)
+      const doubleRefundCount = user.countAbility(SPECIAL_ABILITIES.DOUBLE_REFUND);
+      if (doubleRefundCount > 0) {
+        deathSupport.refundAmount *= Math.pow(2, doubleRefundCount);
+        deathSupport.refundRate *= Math.pow(2, doubleRefundCount);
       }
 
       // 특수 능력: 잭팟 확률 2배 체크는 calculateDeathSupport에서 처리 필요

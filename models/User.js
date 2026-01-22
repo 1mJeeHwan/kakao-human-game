@@ -42,6 +42,21 @@ const userSchema = new mongoose.Schema({
     totalSpentOnHuman: {
       type: Number,
       default: 0
+    },
+
+    // 현재 인간의 생애 동안 획득한 칭호 목록 (능력 중복 방지용)
+    obtainedTitles: {
+      type: [String],
+      default: []
+    },
+
+    // 현재 인간의 누적 특수 능력 목록
+    abilities: {
+      type: [{
+        name: { type: String, required: true },
+        used: { type: Boolean, default: false }
+      }],
+      default: []
     }
   },
 
@@ -114,6 +129,12 @@ userSchema.methods.createNewHuman = function() {
   const title = rollTitle();
   const job = rollJob();
 
+  // 초기 능력 설정
+  const initialAbilities = [];
+  if (title.special) {
+    initialAbilities.push({ name: title.special, used: false });
+  }
+
   this.human = {
     level: 0,
     title: {
@@ -129,7 +150,9 @@ userSchema.methods.createNewHuman = function() {
       grade: job.grade,
       bonusRate: job.bonusRate
     },
-    totalSpentOnHuman: 0
+    totalSpentOnHuman: 0,
+    obtainedTitles: [title.name],
+    abilities: initialAbilities
   };
 
   // 도감에 추가
@@ -152,6 +175,21 @@ userSchema.methods.rerollTitle = function() {
   const newTitle = rollTitle();
   const oldTitle = this.human.title.name;
 
+  // 이미 획득한 칭호인지 확인
+  const isNewTitle = !this.human.obtainedTitles.includes(newTitle.name);
+  let abilityAdded = false;
+
+  // 새 칭호면 obtainedTitles에 추가하고 능력 부여
+  if (isNewTitle) {
+    this.human.obtainedTitles.push(newTitle.name);
+
+    // 특수 능력이 있으면 abilities에 추가
+    if (newTitle.special) {
+      this.human.abilities.push({ name: newTitle.special, used: false });
+      abilityAdded = true;
+    }
+  }
+
   this.human.title = {
     name: newTitle.name,
     grade: newTitle.grade,
@@ -169,7 +207,7 @@ userSchema.methods.rerollTitle = function() {
     this.stats.legendaryTitleCount += 1;
   }
 
-  return { oldTitle, newTitle };
+  return { oldTitle, newTitle, isNewTitle, abilityAdded };
 };
 
 /**
@@ -267,10 +305,54 @@ userSchema.methods.loseJob = function() {
 };
 
 /**
- * 특수 능력 사용 처리
+ * 특수 능력 사용 처리 (기존 호환용)
  */
 userSchema.methods.useSpecialAbility = function() {
   this.human.title.specialUsed = true;
+};
+
+/**
+ * 특정 능력 보유 여부 확인 (미사용 상태)
+ * @param {string} abilityName - 능력 이름
+ * @returns {boolean}
+ */
+userSchema.methods.hasAbility = function(abilityName) {
+  if (!this.human.abilities) return false;
+  return this.human.abilities.some(a => a.name === abilityName && !a.used);
+};
+
+/**
+ * 특정 능력 사용 처리
+ * @param {string} abilityName - 능력 이름
+ * @returns {boolean} 사용 성공 여부
+ */
+userSchema.methods.useAbility = function(abilityName) {
+  if (!this.human.abilities) return false;
+  const ability = this.human.abilities.find(a => a.name === abilityName && !a.used);
+  if (ability) {
+    ability.used = true;
+    return true;
+  }
+  return false;
+};
+
+/**
+ * 특정 능력 개수 확인 (미사용)
+ * @param {string} abilityName - 능력 이름
+ * @returns {number}
+ */
+userSchema.methods.countAbility = function(abilityName) {
+  if (!this.human.abilities) return 0;
+  return this.human.abilities.filter(a => a.name === abilityName && !a.used).length;
+};
+
+/**
+ * 모든 활성 능력 목록 조회
+ * @returns {Array}
+ */
+userSchema.methods.getActiveAbilities = function() {
+  if (!this.human.abilities) return [];
+  return this.human.abilities.filter(a => !a.used).map(a => a.name);
 };
 
 /**
