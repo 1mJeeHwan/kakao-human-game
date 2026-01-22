@@ -189,7 +189,7 @@ const SPECIAL_ENDINGS = [
   {
     id: 'entertainer_rich',
     type: ENDING_TYPES.JOB_BASED,
-    chance: 10,
+    chance: 5,
     condition: (user) => ['가수', '배우'].includes(user.human.job.name),
     deathMessage: '🌟 영원한 스타가 되었습니다...',
     nextJob: '대부호',
@@ -198,7 +198,7 @@ const SPECIAL_ENDINGS = [
   {
     id: 'merchant_tycoon',
     type: ENDING_TYPES.JOB_BASED,
-    chance: 20,
+    chance: 10,
     condition: (user) => user.human.job.name === '상인' && user.human.level >= 10,
     deathMessage: '🏪 부의 비밀을 깨달았습니다...',
     nextJob: '대부호',
@@ -207,7 +207,7 @@ const SPECIAL_ENDINGS = [
   {
     id: 'business_empire',
     type: ENDING_TYPES.JOB_BASED,
-    chance: 30,
+    chance: 15,
     condition: (user) => user.human.job.name === '사업가',
     deathMessage: '🏢 제국을 물려받았습니다...',
     nextJob: '대부호',
@@ -272,7 +272,7 @@ const SPECIAL_ENDINGS = [
   {
     id: 'title_lucky',
     type: ENDING_TYPES.TITLE_BASED,
-    chance: 25,
+    chance: 12,
     condition: (user) => user.human.title.name === '행운의',
     deathMessage: '🍀 행운이 따라갑니다...',
     nextJob: '대부호',
@@ -317,7 +317,7 @@ const SPECIAL_ENDINGS = [
   {
     id: 'title_wealthy',
     type: ENDING_TYPES.TITLE_BASED,
-    chance: 30,
+    chance: 15,
     condition: (user) => user.human.title.name === '부유한',
     deathMessage: '💎 재산이 환생했습니다...',
     nextJob: '대부호',
@@ -363,15 +363,6 @@ const SPECIAL_ENDINGS = [
   },
 
   // ========== 골드 기반 조건부 ==========
-  {
-    id: 'gold_rich_death',
-    type: ENDING_TYPES.GOLD_BASED,
-    chance: 30,
-    condition: (user) => user.gold >= 10000,
-    deathMessage: '💰 부자의 죽음은 화려합니다...',
-    nextJob: '대부호',
-    flavor: '부의 인연이 이어집니다!'
-  },
   {
     id: 'gold_broke_death',
     type: ENDING_TYPES.GOLD_BASED,
@@ -514,7 +505,7 @@ const SPECIAL_ENDINGS = [
   {
     id: 'lion_king',
     type: ENDING_TYPES.ANIMAL,
-    chance: 40,
+    chance: 20,
     condition: (user) => user.human.job.name === '사자',
     deathMessage: '🦁 정글의 왕이 인간 세계를 정복합니다...',
     nextJob: '대부호',

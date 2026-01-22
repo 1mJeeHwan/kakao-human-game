@@ -223,13 +223,29 @@ async function upgradeHuman(req, res) {
         nextInfoText = '\n\n🎉 최대 레벨 달성!';
       }
 
+      // 현재 보유 효과 표시
+      const titleBonus = Math.round(user.human.title.bonusRate * 100);
+      const jobBonus = Math.round(user.human.job.bonusRate * 100);
+      const activeAbilities = user.getActiveAbilities();
+
+      let effectsText = `
+
+📋 현재 효과
+- 칭호: ${user.human.title.name} (+${titleBonus}%)
+- 직업: ${user.human.job.name} (+${jobBonus}%)`;
+
+      if (activeAbilities.length > 0) {
+        const abilityList = activeAbilities.map(a => ABILITY_DESCRIPTIONS[a] || a).join(', ');
+        effectsText += `\n- 능력: ${abilityList}`;
+      }
+
       text = `✨ 성장 성공! ✨
 
 👤 ${newName}
 
 💰 사용: ${formatGold(actualCost)}${costDiscountText}
 💰 남은 골드: ${formatGold(user.gold)}
-💵 현재 판매가: ${formatGold(sellPrice)}${changeText}${nextInfoText}`;
+💵 현재 판매가: ${formatGold(sellPrice)}${effectsText}${changeText}${nextInfoText}`;
 
       await user.save();
       const successImage = getJobImage(user.human.job.name, user.human.job.grade, user.human.level, user.human.title.grade);
