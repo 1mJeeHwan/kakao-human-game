@@ -64,7 +64,19 @@ const STATIC_JOB_IMAGES = {
   '암살자': 'assassin.png',
   '현자': 'sage.png',
   '드래곤슬레이어': 'dragon_slayer.png',
-  '대부호': 'billionaire.png'
+  '대부호': 'billionaire.png',
+  // 동물 (Animal)
+  '강아지': 'puppy.png',
+  '고양이': 'cat.png',
+  '토끼': 'bunny.png',
+  '햄스터': 'hamster.png',
+  '펭귄': 'penguin.png',
+  '판다': 'panda.png',
+  '여우': 'fox.png',
+  '곰': 'bear.png',
+  '늑대': 'wolf.png',
+  '사자': 'lion.png',
+  '도마뱀': 'lizard.png'
 };
 
 // 직업별 시드 (일관된 이미지 생성)
@@ -125,7 +137,20 @@ const JOB_SEEDS = {
   '암살자': 'assassin_shadow',
   '현자': 'sage_wisdom',
   '드래곤슬레이어': 'dragonslayer_epic',
-  '대부호': 'billionaire_rich'
+  '대부호': 'billionaire_rich',
+
+  // 동물
+  '강아지': 'puppy_cute_dog',
+  '고양이': 'cat_cute_kitty',
+  '토끼': 'bunny_cute_rabbit',
+  '햄스터': 'hamster_cute_chubby',
+  '펭귄': 'penguin_cute_tuxedo',
+  '판다': 'panda_cute_bamboo',
+  '여우': 'fox_cute_orange',
+  '곰': 'bear_cute_brown',
+  '늑대': 'wolf_cute_gray',
+  '사자': 'lion_cute_mane',
+  '도마뱀': 'lizard_cute_green'
 };
 
 // 상태별 시드 (DiceBear 폴백용)

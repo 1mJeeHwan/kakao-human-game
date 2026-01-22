@@ -108,7 +108,8 @@ const JOBS = [
   { name: '여우', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
   { name: '곰', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
   { name: '늑대', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
-  { name: '사자', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 }
+  { name: '사자', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 },
+  { name: '도마뱀', category: JOB_CATEGORIES.ANIMAL, grade: JOB_GRADES.ANIMAL, bonusRate: 0.25 }
 ];
 
 // 등급별 확률
@@ -251,6 +252,11 @@ const JOB_LOSS_MESSAGES = {
     '왕위를 빼앗겼습니다...',
     '사바나에서 추방당했습니다...',
     '동물원에 갇혔습니다...'
+  ],
+  '도마뱀': [
+    '꼬리가 재생되지 않았습니다...',
+    '햇볕이 부족해 힘을 잃었습니다...',
+    '포식자에게 쫓기는 중...'
   ]
 };
 

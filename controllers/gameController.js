@@ -182,7 +182,7 @@ async function upgradeHuman(req, res) {
         const newBonus = Math.round(newTitle.bonusRate * 100);
         let specialText = '';
         if (abilityAdded && newTitle.special) {
-          specialText = `\n  🆕 능력 획득! ${ABILITY_DESCRIPTIONS[newTitle.special]}`;
+          specialText = `\n\n🎁🎁🎁 새 능력 획득! 🎁🎁🎁\n${ABILITY_DESCRIPTIONS[newTitle.special]}`;
         } else if (!isNewTitle && newTitle.special) {
           specialText = `\n  (이미 보유한 칭호 - 능력 추가 없음)`;
         }
@@ -315,6 +315,12 @@ async function upgradeHuman(req, res) {
         }
       }
 
+      // 새 인간의 특수능력 표시
+      let newAbilityText = '';
+      if (user.human.title.special) {
+        newAbilityText = `\n✨ 특수능력: ${ABILITY_DESCRIPTIONS[user.human.title.special]}`;
+      }
+
       text = `💀 인간이 사망했습니다...
 
 🪦 ${deathMsg}
@@ -323,7 +329,7 @@ async function upgradeHuman(req, res) {
 💰 투자금: ${formatGold(totalSpent)}${supportText}${specialText}
 
 👤 새로운 인간이 도착했습니다!${newJobCelebration}
-🏷️ ${newHumanName}
+🏷️ ${newHumanName}${newAbilityText}
 
 💰 남은 골드: ${formatGold(user.gold)}`;
 
@@ -417,6 +423,12 @@ async function sellHuman(req, res) {
       newJobCelebration = '\n🌟🌟🌟 전설 직업 등장! 🌟🌟🌟';
     }
 
+    // 새 인간의 특수능력 표시
+    let newAbilityText = '';
+    if (user.human.title.special) {
+      newAbilityText = `\n✨ 특수능력: ${ABILITY_DESCRIPTIONS[user.human.title.special]}`;
+    }
+
     const text = `💰 판매 완료!
 ━━━━━━━━━━━━━━━━━━
 🪦 판매한 인간
@@ -432,7 +444,7 @@ ${soldHumanName}
 💰 보유 골드: ${formatGold(user.gold)}
 
 👤 새로운 인간이 도착!${newJobCelebration}
-🏷️ ${newHumanName}`;
+🏷️ ${newHumanName}${newAbilityText}`;
 
     const soldLevel = human.level;
     await user.save();

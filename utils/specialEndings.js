@@ -511,6 +511,15 @@ const SPECIAL_ENDINGS = [
     nextJob: '대부호',
     flavor: '왕은 어디서든 왕입니다!'
   },
+  {
+    id: 'lizard_regeneration',
+    type: ENDING_TYPES.ANIMAL,
+    chance: 30,
+    condition: (user) => user.human.job.name === '도마뱀',
+    deathMessage: '🦎 꼬리를 버리고 새로운 힘으로 부활합니다...',
+    nextJob: '연금술사',
+    flavor: '재생의 비밀이 연금술로 승화됩니다!'
+  },
 
   // ========== 마일스톤 (사망 횟수 기반) ==========
   {
