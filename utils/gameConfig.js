@@ -2,8 +2,8 @@
  * 게임 설정 및 성장 확률 테이블
  */
 
-// 초기 골드 (감소)
-const INITIAL_GOLD = 500;
+// 초기 골드
+const INITIAL_GOLD = 5000;
 
 // 최대 레벨
 const MAX_LEVEL = 15;
