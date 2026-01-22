@@ -190,19 +190,23 @@ async function upgradeHuman(req, res) {
       }
 
       if (shouldChangeJob()) {
-        const { oldJob, newJob } = user.rerollJob();
-        const newGradeKorean = JOB_GRADE_KOREAN[newJob.grade];
-        const newBonus = Math.round(newJob.bonusRate * 100);
+        const { oldJob, newJob, skipped } = user.rerollJob();
 
-        // 특수 직업 축하 문구
-        let jobCelebration = '';
-        if (newJob.grade === JOB_GRADES.ANIMAL) {
-          jobCelebration = '\n\n🐾🐾🐾 동물 직업 등장! 🐾🐾🐾';
-        } else if (newJob.grade === JOB_GRADES.LEGENDARY) {
-          jobCelebration = '\n\n🌟🌟🌟 전설 직업 등장! 🌟🌟🌟';
+        // 동물 직업은 변경되지 않음 (메시지 표시 안함)
+        if (!skipped) {
+          const newGradeKorean = JOB_GRADE_KOREAN[newJob.grade];
+          const newBonus = Math.round(newJob.bonusRate * 100);
+
+          // 특수 직업 축하 문구
+          let jobCelebration = '';
+          if (newJob.grade === JOB_GRADES.ANIMAL) {
+            jobCelebration = '\n\n🐾🐾🐾 동물 직업 등장! 🐾🐾🐾';
+          } else if (newJob.grade === JOB_GRADES.LEGENDARY) {
+            jobCelebration = '\n\n🌟🌟🌟 전설 직업 등장! 🌟🌟🌟';
+          }
+
+          changeText += `${jobCelebration}\n\n🎲 직업이 변경되었습니다!\n${oldJob} → ${newJob.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newJob.grade)}`;
         }
-
-        changeText += `${jobCelebration}\n\n🎲 직업이 변경되었습니다!\n${oldJob} → ${newJob.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newJob.grade)}`;
       }
 
       const newName = getHumanFullName(user.human);

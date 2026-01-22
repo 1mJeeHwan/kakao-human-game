@@ -254,8 +254,14 @@ userSchema.methods.rerollTitle = function() {
 
 /**
  * 직업 리롤
+ * 동물 직업은 변경되지 않음
  */
 userSchema.methods.rerollJob = function() {
+  // 동물 직업은 변경되지 않음
+  if (this.human.job.grade === 'animal') {
+    return { oldJob: this.human.job.name, newJob: this.human.job, skipped: true };
+  }
+
   const newJob = rollJob();
   const oldJob = this.human.job.name;
 
@@ -275,7 +281,7 @@ userSchema.methods.rerollJob = function() {
     this.stats.legendaryJobCount += 1;
   }
 
-  return { oldJob, newJob };
+  return { oldJob, newJob, skipped: false };
 };
 
 /**
