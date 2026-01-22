@@ -570,25 +570,25 @@ async function claimReward(req, res) {
     let rewardGold = 0;
     let rewardText = '';
 
-    // 칭호 완성 보상 (100,000G)
+    // 칭호 완성 보상 (10,000G)
     if (titleComplete && !user.collection.rewardsClaimed.titleComplete) {
-      rewardGold += 100000;
+      rewardGold += 10000;
       user.collection.rewardsClaimed.titleComplete = true;
-      rewardText += '🏷️ 칭호 도감 완성! +100,000G\n';
+      rewardText += '🏷️ 칭호 도감 완성! +10,000G\n';
     }
 
-    // 직업 완성 보상 (150,000G)
+    // 직업 완성 보상 (15,000G)
     if (jobComplete && !user.collection.rewardsClaimed.jobComplete) {
-      rewardGold += 150000;
+      rewardGold += 15000;
       user.collection.rewardsClaimed.jobComplete = true;
-      rewardText += '💼 직업 도감 완성! +150,000G\n';
+      rewardText += '💼 직업 도감 완성! +15,000G\n';
     }
 
-    // 전체 완성 보상 (500,000G)
+    // 전체 완성 보상 (50,000G)
     if (allComplete && !user.collection.rewardsClaimed.allComplete) {
-      rewardGold += 500000;
+      rewardGold += 50000;
       user.collection.rewardsClaimed.allComplete = true;
-      rewardText += '🌟 전체 도감 완성! +500,000G\n';
+      rewardText += '🌟 전체 도감 완성! +50,000G\n';
     }
 
     if (rewardGold > 0) {

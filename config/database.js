@@ -13,7 +13,10 @@ async function connectDatabase() {
 
   try {
     await mongoose.connect(uri, {
-      maxPoolSize: 10
+      maxPoolSize: 20,           // 동시 연결 20개 (무료 티어 최적)
+      minPoolSize: 2,            // 최소 2개 유지
+      serverSelectionTimeoutMS: 5000,  // 서버 선택 타임아웃
+      socketTimeoutMS: 45000     // 소켓 타임아웃
     });
 
     console.log('MongoDB 연결 성공');

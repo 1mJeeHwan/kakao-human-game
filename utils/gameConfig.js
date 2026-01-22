@@ -3,7 +3,7 @@
  */
 
 // 초기 골드 (감소)
-const INITIAL_GOLD = 5000;
+const INITIAL_GOLD = 500;
 
 // 최대 레벨
 const MAX_LEVEL = 15;
@@ -16,23 +16,23 @@ const MAX_LEVEL = 15;
 // - 비용: 성공률 높을수록 비용 비율 높음, 낮을수록 저렴 (도전 유도)
 // success + death + fail = 100
 const UPGRADE_TABLE = [
-  { level: 0, success: 98, death: 1, fail: 1, cost: 20 },
-  { level: 1, success: 96, death: 2, fail: 2, cost: 50 },
-  { level: 2, success: 93, death: 3, fail: 4, cost: 100 },
-  { level: 3, success: 89, death: 5, fail: 6, cost: 200 },
-  { level: 4, success: 84, death: 7, fail: 9, cost: 500 },
+  { level: 0, success: 98, death: 1, fail: 1, cost: 2 },
+  { level: 1, success: 96, death: 2, fail: 2, cost: 5 },
+  { level: 2, success: 93, death: 3, fail: 4, cost: 10 },
+  { level: 3, success: 89, death: 5, fail: 6, cost: 20 },
+  { level: 4, success: 84, death: 7, fail: 9, cost: 50 },
   // 5강 이후 점진적 증가
-  { level: 5, success: 75, death: 10, fail: 15, cost: 1000 },
-  { level: 6, success: 65, death: 15, fail: 20, cost: 3000 },
-  { level: 7, success: 55, death: 20, fail: 25, cost: 10000 },
-  { level: 8, success: 45, death: 25, fail: 30, cost: 30000 },
-  { level: 9, success: 35, death: 30, fail: 35, cost: 100000 },
+  { level: 5, success: 75, death: 10, fail: 15, cost: 100 },
+  { level: 6, success: 65, death: 15, fail: 20, cost: 300 },
+  { level: 7, success: 55, death: 20, fail: 25, cost: 1000 },
+  { level: 8, success: 45, death: 25, fail: 30, cost: 3000 },
+  { level: 9, success: 35, death: 30, fail: 35, cost: 10000 },
   // 10강 이후 대폭 증가
-  { level: 10, success: 25, death: 40, fail: 35, cost: 300000 },
-  { level: 11, success: 18, death: 50, fail: 32, cost: 1000000 },
-  { level: 12, success: 12, death: 60, fail: 28, cost: 3000000 },
-  { level: 13, success: 7, death: 70, fail: 23, cost: 10000000 },
-  { level: 14, success: 3, death: 80, fail: 17, cost: 30000000 }
+  { level: 10, success: 25, death: 40, fail: 35, cost: 30000 },
+  { level: 11, success: 18, death: 50, fail: 32, cost: 100000 },
+  { level: 12, success: 12, death: 60, fail: 28, cost: 300000 },
+  { level: 13, success: 7, death: 70, fail: 23, cost: 1000000 },
+  { level: 14, success: 3, death: 80, fail: 17, cost: 3000000 }
 ];
 
 // 파괴 지원금 확률 테이블
@@ -77,7 +77,7 @@ const TITLE_CHANGE_CHANCE = 20;  // 20% 확률로 칭호 변경
 const JOB_CHANGE_CHANCE = 15;    // 15% 확률로 직업 변경
 
 // 판매 가격 기본 배수 (대폭 감소)
-const SELL_PRICE_MULTIPLIER = 100;
+const SELL_PRICE_MULTIPLIER = 10;
 
 /**
  * 성장 정보 가져오기

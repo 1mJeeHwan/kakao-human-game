@@ -8,15 +8,42 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const { connectDatabase } = require('./config/database');
 const gameRoutes = require('./routes/game');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 미들웨어
+// 보안 미들웨어
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }  // 이미지 외부 접근 허용
+}));
+
+// 응답 압축 (네트워크 대역폭 절약)
+app.use(compression());
+
+// Rate Limiting - 남용 방지
+const apiLimiter = rateLimit({
+  windowMs: 1000,        // 1초
+  max: 10,               // 1초에 10번까지
+  message: {
+    version: "2.0",
+    template: {
+      outputs: [{
+        simpleText: { text: "⚠️ 너무 빠르게 요청하고 있습니다!\n잠시 후 다시 시도해주세요." }
+      }]
+    }
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// 기본 미들웨어
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));  // 요청 크기 제한
 
 // 정적 파일 서빙 (이미지, CSS 등)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -39,11 +66,25 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy' });
+  const mongoose = require('mongoose');
+  const memUsage = process.memoryUsage();
+
+  res.json({
+    status: 'healthy',
+    uptime: Math.floor(process.uptime()),
+    memory: {
+      used: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
+      total: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB'
+    },
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
 });
 
-// 게임 API 라우트
-app.use('/game', gameRoutes);
+// 프록시 신뢰 (Render 등 클라우드 환경)
+app.set('trust proxy', 1);
+
+// 게임 API 라우트 (Rate Limiting 적용)
+app.use('/game', apiLimiter, gameRoutes);
 
 // 404 핸들러
 app.use((req, res) => {
@@ -69,10 +110,38 @@ async function startServer() {
     await connectDatabase();
 
     // 서버 시작
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
-      console.log(`환경: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`환경: ${process.env.NODE_ENV || 'production'}`);
+      console.log(`최적화: helmet, compression, rate-limit 활성화`);
     });
+
+    // Graceful Shutdown (안전한 종료)
+    const gracefulShutdown = async (signal) => {
+      console.log(`\n${signal} 신호 수신, 서버를 안전하게 종료합니다...`);
+
+      server.close(async () => {
+        console.log('HTTP 서버 종료 완료');
+        try {
+          const mongoose = require('mongoose');
+          await mongoose.connection.close();
+          console.log('MongoDB 연결 종료 완료');
+          process.exit(0);
+        } catch (err) {
+          console.error('MongoDB 종료 오류:', err);
+          process.exit(1);
+        }
+      });
+
+      // 10초 후 강제 종료
+      setTimeout(() => {
+        console.error('강제 종료');
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
   } catch (error) {
     console.error('서버 시작 실패:', error);

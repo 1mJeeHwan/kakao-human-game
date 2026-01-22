@@ -115,12 +115,16 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  suppressReservedKeysWarning: true  // 'collection' 필드명 경고 무시
 });
 
-// 인덱스 설정
+// 인덱스 설정 (쿼리 최적화)
 userSchema.index({ 'stats.maxLevel': -1 });
 userSchema.index({ 'human.level': -1 });
 userSchema.index({ gold: -1 });
+userSchema.index({ lastPlayedAt: -1 });  // 비활성 유저 정리용
+userSchema.index({ createdAt: 1 });      // 통계용
 
 /**
  * 새 캐릭터 생성 (랜덤 칭호 + 직업)
