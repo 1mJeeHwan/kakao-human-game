@@ -266,13 +266,10 @@ async function upgradeHuman(req, res) {
         supportText = `\n\n${refundMsg}`;
       }
 
-      // 특수 엔딩 보너스 텍스트
+      // 특수 엔딩 텍스트
       let specialText = '';
       if (specialEnding) {
         specialText = `\n\n✨ ${specialEnding.flavor}`;
-        if (specialEnding.bonusGold > 0) {
-          specialText += `\n🎁 보너스 골드: +${formatGold(specialEnding.bonusGold)}`;
-        }
         if (specialEnding.nextJob) {
           specialText += `\n⚡ 직업 확정: ${specialEnding.nextJob}`;
         }

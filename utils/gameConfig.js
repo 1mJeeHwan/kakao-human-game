@@ -35,13 +35,14 @@ const UPGRADE_TABLE = [
   { level: 14, success: 3, death: 80, fail: 17, cost: 3000000 }
 ];
 
-// 파괴 지원금 확률 테이블
+// 파괴 지원금 확률 테이블 (총 30% 확률)
 const DEATH_SUPPORT_TABLE = [
-  { refundRate: 0.5, chance: 50 },    // 50% 환급: 50% 확률
-  { refundRate: 0.7, chance: 30 },    // 70% 환급: 30% 확률
-  { refundRate: 0.9, chance: 5 },     // 90% 환급: 5% 확률
-  { refundRate: 1.0, chance: 1 },     // 100% 환급: 1% 확률
+  { refundRate: 0.5, chance: 20 },    // 50% 환급: 20% 확률
+  { refundRate: 0.7, chance: 7 },     // 70% 환급: 7% 확률
+  { refundRate: 0.9, chance: 2 },     // 90% 환급: 2% 확률
+  { refundRate: 1.0, chance: 0.9 },   // 100% 환급: 0.9% 확률
   { refundRate: 2.0, chance: 0.1 }    // 200% 환급 (잭팟): 0.1% 확률
+  // 나머지 70%: 환급 없음
 ];
 
 /**

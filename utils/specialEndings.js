@@ -55,8 +55,7 @@ const SPECIAL_ENDINGS = [
     condition: null,
     deathMessage: '💰 황금빛 기운이 감쌌습니다...',
     nextJob: '대부호',
-    flavor: '부의 축복을 받았습니다!',
-    bonusGold: 500
+    flavor: '부의 축복을 받았습니다!'
   },
   {
     id: 'dragon_blood',
@@ -358,31 +357,28 @@ const SPECIAL_ENDINGS = [
     chance: 15,
     condition: (user) => user.human.level === 0,
     deathMessage: '😢 시작도 못해봤네...',
-    nextJob: null,
-    flavor: '위로의 선물을 받습니다!',
-    bonusGold: 1000  // 시작 골드 2배
+    nextJob: 'RANDOM_RARE',
+    flavor: '운명이 다시 한번 기회를 줍니다!'
   },
 
   // ========== 골드 기반 조건부 ==========
   {
     id: 'gold_rich_death',
     type: ENDING_TYPES.GOLD_BASED,
-    chance: 100,
+    chance: 30,
     condition: (user) => user.gold >= 10000,
-    deathMessage: '💰 재산을 남기고 떠났습니다...',
-    nextJob: null,
-    flavor: '유산의 50%를 물려받습니다!',
-    goldMultiplier: 0.5  // 현재 골드의 50% 유지
+    deathMessage: '💰 부자의 죽음은 화려합니다...',
+    nextJob: '대부호',
+    flavor: '부의 인연이 이어집니다!'
   },
   {
     id: 'gold_broke_death',
     type: ENDING_TYPES.GOLD_BASED,
-    chance: 30,
-    condition: (user) => user.gold === 0,
+    chance: 20,
+    condition: (user) => user.gold <= 100,
     deathMessage: '🥺 빈손으로 왔다가 빈손으로...',
-    nextJob: null,
-    flavor: '신이 불쌍히 여깁니다!',
-    bonusGold: 1500  // 시작 골드 3배
+    nextJob: 'RANDOM_RARE',
+    flavor: '신이 불쌍히 여깁니다!'
   },
 
   // ========== 복합 조건 (레어) ==========
@@ -439,9 +435,8 @@ const SPECIAL_ENDINGS = [
     chance: 100,
     condition: (user) => user.stats.deathCount === 0,
     deathMessage: '📘 모든 시작은 실패부터...',
-    nextJob: null,
-    flavor: '첫 교훈을 얻었습니다!',
-    bonusGold: 500
+    nextJob: 'RANDOM_RARE',
+    flavor: '첫 교훈과 함께 새로운 기회가!'
   },
   {
     id: 'death_10',
@@ -542,8 +537,6 @@ function processEnding(ending, user) {
     deathMessage: ending.deathMessage,
     flavor: ending.flavor,
     nextJob: null,
-    bonusGold: ending.bonusGold || 0,
-    goldMultiplier: ending.goldMultiplier || 0,
     grantLegendaryTitle: ending.grantLegendaryTitle || false
   };
 

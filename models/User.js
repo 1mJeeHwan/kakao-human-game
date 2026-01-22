@@ -350,16 +350,6 @@ userSchema.methods.handleDeath = function(specialEnding = null) {
       triggeredAt: new Date()
     };
 
-    // 보너스 골드
-    if (specialEnding.bonusGold) {
-      this.gold += specialEnding.bonusGold;
-    }
-
-    // 골드 유지 비율
-    if (specialEnding.goldMultiplier) {
-      this.gold += Math.floor(this.gold * specialEnding.goldMultiplier);
-    }
-
     // 다음 직업 고정
     lockedJobName = specialEnding.nextJob;
   }
