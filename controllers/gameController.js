@@ -49,6 +49,53 @@ const ANOMALY_WINDOW_MS = 60000;    // 이상 감지 윈도우: 1분
 const ANOMALY_THRESHOLD = 60;       // 1분에 60회 이상 시 이상 감지
 const FLAGGED_USERS = new Set();    // 플래그된 유저 목록
 
+// ========== 서버 과부하 대기줄 시스템 ==========
+
+// 현재 처리 중인 요청 수
+let currentConcurrentRequests = 0;
+
+// 설정 (Render 무료 티어 기준)
+const MAX_CONCURRENT_REQUESTS = 50;   // 최대 동시 처리 요청
+const QUEUE_MESSAGES = [
+  '🚦 서버가 바빠요! 잠시만 기다려주세요~',
+  '⏳ 접속자가 많습니다. 곧 차례가 옵니다!',
+  '🎮 인기 폭발! 잠시 후 다시 시도해주세요.',
+  '☕ 서버 휴식 중... 3초 후 다시 눌러주세요!',
+  '🔥 핫한 게임! 조금만 기다려주세요~'
+];
+
+/**
+ * 서버 과부하 체크
+ * @returns {Object} { overloaded: boolean, currentLoad: number, message: string }
+ */
+function checkServerLoad() {
+  const overloaded = currentConcurrentRequests >= MAX_CONCURRENT_REQUESTS;
+  const message = overloaded
+    ? QUEUE_MESSAGES[Math.floor(Math.random() * QUEUE_MESSAGES.length)]
+    : null;
+
+  return {
+    overloaded,
+    currentLoad: currentConcurrentRequests,
+    maxLoad: MAX_CONCURRENT_REQUESTS,
+    message
+  };
+}
+
+/**
+ * 요청 시작 (카운터 증가)
+ */
+function requestStart() {
+  currentConcurrentRequests++;
+}
+
+/**
+ * 요청 종료 (카운터 감소)
+ */
+function requestEnd() {
+  currentConcurrentRequests = Math.max(0, currentConcurrentRequests - 1);
+}
+
 /**
  * 쿨다운 체크
  * @returns {Object} { allowed: boolean, remainingMs: number }
@@ -181,6 +228,16 @@ async function startGame(req, res) {
  * 인간 성장
  */
 async function upgradeHuman(req, res) {
+  // 🚦 서버 과부하 체크 (대기줄)
+  const loadStatus = checkServerLoad();
+  if (loadStatus.overloaded) {
+    console.warn(`🚦 [QUEUE] Server overloaded: ${loadStatus.currentLoad}/${loadStatus.maxLoad}`);
+    return res.json(createKakaoResponse(loadStatus.message, UPGRADE_QUICK_REPLIES));
+  }
+
+  // 요청 카운터 증가
+  requestStart();
+
   try {
     const userId = extractUserId(req.body);
 
@@ -547,6 +604,9 @@ async function upgradeHuman(req, res) {
   } catch (error) {
     console.error('upgradeHuman 오류:', error);
     return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
+  } finally {
+    // 요청 카운터 감소 (항상 실행)
+    requestEnd();
   }
 }
 
@@ -1213,5 +1273,9 @@ module.exports = {
   // 봇 방지 시스템 (관리자용)
   FLAGGED_USERS,
   userCooldowns,
-  userRequestHistory
+  userRequestHistory,
+  // 서버 과부하 대기줄 시스템 (관리자용)
+  checkServerLoad,
+  currentConcurrentRequests: () => currentConcurrentRequests,
+  MAX_CONCURRENT_REQUESTS
 };

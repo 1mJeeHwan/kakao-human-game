@@ -7,7 +7,14 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const User = require('../models/User');
-const { FLAGGED_USERS, userCooldowns, userRequestHistory } = require('../controllers/gameController');
+const {
+  FLAGGED_USERS,
+  userCooldowns,
+  userRequestHistory,
+  checkServerLoad,
+  currentConcurrentRequests,
+  MAX_CONCURRENT_REQUESTS
+} = require('../controllers/gameController');
 
 // 비밀번호 시도 제한
 const passwordAttempts = new Map();
@@ -98,6 +105,9 @@ router.get('/status', async (req, res) => {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const activeUsers = await User.countDocuments({ lastActiveAt: { $gte: oneDayAgo } });
 
+    // 서버 부하 상태
+    const loadStatus = checkServerLoad();
+
     res.json({
       status: 'healthy',
       uptime: Math.floor(process.uptime()),
@@ -109,6 +119,12 @@ router.get('/status', async (req, res) => {
         status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
         totalUsers,
         activeUsers24h: activeUsers
+      },
+      serverLoad: {
+        currentRequests: loadStatus.currentLoad,
+        maxRequests: loadStatus.maxLoad,
+        overloaded: loadStatus.overloaded,
+        loadPercent: Math.round((loadStatus.currentLoad / loadStatus.maxLoad) * 100) + '%'
       },
       botPrevention: {
         cooldownTracking: userCooldowns.size,

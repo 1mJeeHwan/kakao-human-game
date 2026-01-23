@@ -1,6 +1,6 @@
 {
   "name": "human-upgrade-game",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "카카오톡 인간 키우기 게임",
   "main": "server.js",
   "scripts": {
