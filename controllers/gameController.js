@@ -145,51 +145,40 @@ async function upgradeHuman(req, res) {
     user.stats.totalGoldSpent += actualCost;
     user.human.totalSpentOnHuman = (user.human.totalSpentOnHuman || 0) + actualCost;
 
-    // 특수 능력: 성공률 보정 (누적 - 행운 능력 개수 x 5%)
-    const luckCount = user.countAbility(SPECIAL_ABILITIES.LUCK_UP);
-    let successBonus = luckCount * 5;
+    // 성장 결과 계산
+    let result = calculateUpgradeResult(human.level);
 
-    // 성장 결과 계산 (성공률 보정 적용)
-    let result;
-    if (successBonus > 0) {
-      // 커스텀 확률 계산
-      const info = upgradeInfo;
-      let adjustedSuccess = Math.min(info.success + successBonus, 99);
-      let adjustedDeath = info.death;
-      let adjustedFail = 100 - adjustedSuccess - adjustedDeath;
-      if (adjustedFail < 0) {
-        adjustedFail = 0;
-        adjustedDeath = 100 - adjustedSuccess;
-      }
+    // 능력 발동 추적
+    let abilityActivated = null;
 
-      const roll = Math.random() * 100;
-      if (roll < adjustedSuccess) {
-        result = 'success';
-      } else if (roll < adjustedSuccess + adjustedDeath) {
-        result = 'death';
-      } else {
-        result = 'fail';
-      }
-    } else {
-      result = calculateUpgradeResult(human.level);
-    }
-
-    // 특수 능력: 실패를 성공으로 (1회, 누적 시스템)
+    // 특수 능력: 실패를 성공으로 (1회) - 100% 발동
     if (result === 'fail' && user.hasAbility(SPECIAL_ABILITIES.FAIL_TO_SUCCESS)) {
       result = 'success';
       user.useAbility(SPECIAL_ABILITIES.FAIL_TO_SUCCESS);
+      abilityActivated = { name: ABILITY_DESCRIPTIONS[SPECIAL_ABILITIES.FAIL_TO_SUCCESS], type: 'failToSuccess' };
     }
 
-    // 특수 능력: 사망 방지 (1회, 누적 시스템)
+    // 특수 능력: 실패 시 30% 확률로 성공 (1회)
+    if (result === 'fail' && user.hasAbility(SPECIAL_ABILITIES.LUCK_UP)) {
+      if (Math.random() < 0.3) {
+        result = 'success';
+        abilityActivated = { name: ABILITY_DESCRIPTIONS[SPECIAL_ABILITIES.LUCK_UP], type: 'luckUp' };
+      }
+      user.useAbility(SPECIAL_ABILITIES.LUCK_UP);
+    }
+
+    // 특수 능력: 사망 방지 (1회) - 100% 발동
     if (result === 'death' && user.hasAbility(SPECIAL_ABILITIES.DEATH_PROTECT)) {
       result = 'fail';
       user.useAbility(SPECIAL_ABILITIES.DEATH_PROTECT);
+      abilityActivated = { name: ABILITY_DESCRIPTIONS[SPECIAL_ABILITIES.DEATH_PROTECT], type: 'deathProtect' };
     }
 
     // 특수 능력: 사망 시 50% 확률로 방어 (1회)
     if (result === 'death' && user.hasAbility(SPECIAL_ABILITIES.DEATH_RATE_DOWN)) {
       if (Math.random() < 0.5) {
         result = 'fail';
+        abilityActivated = { name: ABILITY_DESCRIPTIONS[SPECIAL_ABILITIES.DEATH_RATE_DOWN], type: 'deathRateDown' };
       }
       user.useAbility(SPECIAL_ABILITIES.DEATH_RATE_DOWN);
     }
@@ -291,7 +280,13 @@ async function upgradeHuman(req, res) {
       // 2레벨 상승 메시지
       const doubleExpText = doubleExpUsed ? '\n\n⚡⚡⚡ 2레벨 상승! ⚡⚡⚡' : '';
 
-      text = `✨ 성장 성공! ✨${doubleExpText}
+      // 능력 발동 메시지
+      let abilityActivatedText = '';
+      if (abilityActivated) {
+        abilityActivatedText = `\n\n✨✨✨ 능력 발동! ✨✨✨\n${abilityActivated.name}`;
+      }
+
+      text = `✨ 성장 성공! ✨${abilityActivatedText}${doubleExpText}
 
 👤 ${newName}
 
@@ -424,7 +419,13 @@ async function upgradeHuman(req, res) {
       const sellPrice = getSellPrice(human.level, human.title.bonusRate, user.human.job.bonusRate);
       const totalSpentFail = user.human.totalSpentOnHuman || 0;
 
-      text = `❌ 성장 실패!
+      // 능력 발동으로 사망→실패 전환 메시지
+      let abilityActivatedFailText = '';
+      if (abilityActivated && (abilityActivated.type === 'deathProtect' || abilityActivated.type === 'deathRateDown')) {
+        abilityActivatedFailText = `\n\n✨✨✨ 능력 발동! ✨✨✨\n${abilityActivated.name}\n💀 사망 → ❌ 실패로 전환!`;
+      }
+
+      text = `❌ 성장 실패!${abilityActivatedFailText}
 
 👤 ${getHumanFullName(user.human)} (유지)
 
