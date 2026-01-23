@@ -21,13 +21,13 @@ const UPGRADE_TABLE = [
   // 1~6강: 사망률 30%로 감소
   { level: 1, success: 96, death: 1, fail: 3, cost: 5 },
   { level: 2, success: 93, death: 1, fail: 6, cost: 10 },
-  // 3~7강: 비용 = 현재 판매가 × 10%
-  { level: 3, success: 89, death: 2, fail: 9, cost: 8 },
-  { level: 4, success: 84, death: 2, fail: 14, cost: 16 },
+  // 3~7강: 비용 = 다음레벨 판매가 ÷ 8
+  { level: 3, success: 89, death: 2, fail: 9, cost: 20 },
+  { level: 4, success: 84, death: 2, fail: 14, cost: 40 },
   // 5강 이후 점진적 증가 (성공률 ×0.8 적용, 사망률 30%)
-  { level: 5, success: 70, death: 5, fail: 25, cost: 32 },
-  { level: 6, success: 66, death: 6, fail: 28, cost: 64 },
-  { level: 7, success: 44, death: 25, fail: 31, cost: 192 },
+  { level: 5, success: 70, death: 5, fail: 25, cost: 80 },
+  { level: 6, success: 66, death: 6, fail: 28, cost: 240 },
+  { level: 7, success: 44, death: 25, fail: 31, cost: 720 },
   // 8강 이후: 비용 <= 현재레벨 판매가 / 4
   { level: 8, success: 36, death: 29, fail: 35, cost: 1400 },
   { level: 9, success: 28, death: 33, fail: 39, cost: 4300 },
