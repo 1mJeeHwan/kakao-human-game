@@ -168,9 +168,13 @@ userSchema.methods.createNewHuman = function(lockedJobName = null) {
     job = rollJob();
   }
 
-  // 초기 능력 설정
+  // 초기 능력 설정 (다중 능력 지원)
   const initialAbilities = [];
-  if (title.special) {
+  if (title.specials && title.specials.length > 0) {
+    for (const ability of title.specials) {
+      initialAbilities.push({ name: ability, used: false });
+    }
+  } else if (title.special) {
     initialAbilities.push({ name: title.special, used: false });
   }
 
@@ -220,15 +224,23 @@ userSchema.methods.rerollTitle = function() {
   // 이미 획득한 칭호인지 확인
   const isNewTitle = !this.human.obtainedTitles.includes(newTitle.name);
   let abilityAdded = false;
+  let abilitiesAddedCount = 0;
 
   // 새 칭호면 obtainedTitles에 추가하고 능력 부여
   if (isNewTitle) {
     this.human.obtainedTitles.push(newTitle.name);
 
-    // 특수 능력이 있으면 abilities에 추가
-    if (newTitle.special) {
+    // 특수 능력이 있으면 abilities에 추가 (다중 능력 지원)
+    if (newTitle.specials && newTitle.specials.length > 0) {
+      for (const ability of newTitle.specials) {
+        this.human.abilities.push({ name: ability, used: false });
+        abilitiesAddedCount++;
+      }
+      abilityAdded = true;
+    } else if (newTitle.special) {
       this.human.abilities.push({ name: newTitle.special, used: false });
       abilityAdded = true;
+      abilitiesAddedCount = 1;
     }
   }
 
@@ -249,7 +261,7 @@ userSchema.methods.rerollTitle = function() {
     this.stats.legendaryTitleCount += 1;
   }
 
-  return { oldTitle, newTitle, isNewTitle, abilityAdded };
+  return { oldTitle, newTitle, isNewTitle, abilityAdded, abilitiesAddedCount };
 };
 
 /**

@@ -150,7 +150,29 @@ async function upgradeHuman(req, res) {
     let successBonus = luckCount * 5;
 
     // 성장 결과 계산 (성공률 보정 적용)
-    let result = calculateUpgradeResult(human.level);
+    let result;
+    if (successBonus > 0) {
+      // 커스텀 확률 계산
+      const info = upgradeInfo;
+      let adjustedSuccess = Math.min(info.success + successBonus, 99);
+      let adjustedDeath = info.death;
+      let adjustedFail = 100 - adjustedSuccess - adjustedDeath;
+      if (adjustedFail < 0) {
+        adjustedFail = 0;
+        adjustedDeath = 100 - adjustedSuccess;
+      }
+
+      const roll = Math.random() * 100;
+      if (roll < adjustedSuccess) {
+        result = 'success';
+      } else if (roll < adjustedSuccess + adjustedDeath) {
+        result = 'death';
+      } else {
+        result = 'fail';
+      }
+    } else {
+      result = calculateUpgradeResult(human.level);
+    }
 
     // 특수 능력: 실패를 성공으로 (1회, 누적 시스템)
     if (result === 'fail' && user.hasAbility(SPECIAL_ABILITIES.FAIL_TO_SUCCESS)) {
@@ -164,6 +186,14 @@ async function upgradeHuman(req, res) {
       user.useAbility(SPECIAL_ABILITIES.DEATH_PROTECT);
     }
 
+    // 특수 능력: 사망 시 50% 확률로 방어 (1회)
+    if (result === 'death' && user.hasAbility(SPECIAL_ABILITIES.DEATH_RATE_DOWN)) {
+      if (Math.random() < 0.5) {
+        result = 'fail';
+      }
+      user.useAbility(SPECIAL_ABILITIES.DEATH_RATE_DOWN);
+    }
+
     const previousLevel = human.level;
     const previousName = getHumanFullName(human);
     const previousJobName = human.job.name;
@@ -171,19 +201,32 @@ async function upgradeHuman(req, res) {
     let text;
 
     if (result === 'success') {
-      user.levelUp();
+      // 특수 능력: 성공 시 2레벨 상승 (1회)
+      let doubleExpUsed = false;
+      if (user.hasAbility(SPECIAL_ABILITIES.DOUBLE_EXP) && human.level + 2 <= MAX_LEVEL) {
+        user.levelUp();
+        user.levelUp();
+        user.useAbility(SPECIAL_ABILITIES.DOUBLE_EXP);
+        doubleExpUsed = true;
+      } else {
+        user.levelUp();
+      }
 
       // 랜덤 칭호/직업 변경 체크
       let changeText = '';
 
       if (shouldChangeTitle()) {
-        const { oldTitle, newTitle, isNewTitle, abilityAdded } = user.rerollTitle();
+        const { oldTitle, newTitle, isNewTitle, abilityAdded, abilitiesAddedCount } = user.rerollTitle();
         const newGradeKorean = TITLE_GRADE_KOREAN[newTitle.grade];
         const newBonus = Math.round(newTitle.bonusRate * 100);
         let specialText = '';
-        if (abilityAdded && newTitle.special) {
-          specialText = `\n\n🎁🎁🎁 새 능력 획득! 🎁🎁🎁\n${ABILITY_DESCRIPTIONS[newTitle.special]}`;
-        } else if (!isNewTitle && newTitle.special) {
+
+        // 다중 능력 지원
+        const titleAbilities = newTitle.specials || (newTitle.special ? [newTitle.special] : []);
+        if (abilityAdded && titleAbilities.length > 0) {
+          const abilityDescriptions = titleAbilities.map(a => ABILITY_DESCRIPTIONS[a] || a).join('\n  ');
+          specialText = `\n\n🎁🎁🎁 새 능력 획득! (${abilitiesAddedCount}개) 🎁🎁🎁\n  ${abilityDescriptions}`;
+        } else if (!isNewTitle && titleAbilities.length > 0) {
           specialText = `\n  (이미 보유한 칭호 - 능력 추가 없음)`;
         }
         changeText += `\n\n🎲 칭호가 변경되었습니다!\n${oldTitle} → ${newTitle.name} (${newGradeKorean} +${newBonus}%) ${getGradeEmoji(newTitle.grade)}${specialText}`;
@@ -245,7 +288,10 @@ async function upgradeHuman(req, res) {
 
       const totalSpentSuccess = user.human.totalSpentOnHuman || 0;
 
-      text = `✨ 성장 성공! ✨
+      // 2레벨 상승 메시지
+      const doubleExpText = doubleExpUsed ? '\n\n⚡⚡⚡ 2레벨 상승! ⚡⚡⚡' : '';
+
+      text = `✨ 성장 성공! ✨${doubleExpText}
 
 👤 ${newName}
 
@@ -285,8 +331,19 @@ async function upgradeHuman(req, res) {
         user.stats.jackpotCount += 1;
       }
 
+      // 특수 능력: 사망해도 레벨 유지 (1회)
+      const hasLevelProtect = user.hasAbility(SPECIAL_ABILITIES.LEVEL_PROTECT);
+      const preservedLevel = hasLevelProtect ? previousLevel : 0;
+
       // 사망 처리 (특수 엔딩 정보 전달)
       const newHumanResult = user.handleDeath(specialEnding);
+
+      // 레벨 유지 능력 적용
+      if (hasLevelProtect && preservedLevel > 0) {
+        user.human.level = preservedLevel;
+        user.useAbility(SPECIAL_ABILITIES.LEVEL_PROTECT);
+      }
+
       const newHumanName = getHumanFullName(user.human);
 
       // 파괴 지원금 메시지
@@ -322,18 +379,25 @@ async function upgradeHuman(req, res) {
         }
       }
 
-      // 새 인간의 특수능력 표시
+      // 새 인간의 특수능력 표시 (다중 능력 지원)
       let newAbilityText = '';
-      if (user.human.title.special) {
-        newAbilityText = `\n✨ 특수능력: ${ABILITY_DESCRIPTIONS[user.human.title.special]}`;
+      const newActiveAbilities = user.getActiveAbilities();
+      if (newActiveAbilities.length > 0) {
+        const abilityList = newActiveAbilities.map(a => ABILITY_DESCRIPTIONS[a] || a).join('\n  ');
+        newAbilityText = `\n✨ 보유 능력:\n  ${abilityList}`;
       }
+
+      // 레벨 유지 메시지
+      const levelProtectText = (hasLevelProtect && preservedLevel > 0)
+        ? `\n\n📈📈📈 레벨 유지 발동! 📈📈📈\n+${preservedLevel} 레벨로 시작합니다!`
+        : '';
 
       text = `💀 인간이 사망했습니다...
 
 🪦 ${deathMsg}
 
 고인: ${oldHumanName}
-💰 투자금: ${formatGold(totalSpent)}${supportText}${specialText}
+💰 투자금: ${formatGold(totalSpent)}${supportText}${specialText}${levelProtectText}
 
 👤 새로운 인간이 도착했습니다!${newJobCelebration}
 🏷️ ${newHumanName}${newAbilityText}
@@ -453,10 +517,12 @@ async function sellHuman(req, res) {
       newJobCelebration = '\n🌟🌟🌟 전설 직업 등장! 🌟🌟🌟';
     }
 
-    // 새 인간의 특수능력 표시
+    // 새 인간의 특수능력 표시 (다중 능력 지원)
     let newAbilityText = '';
-    if (user.human.title.special) {
-      newAbilityText = `\n✨ 특수능력: ${ABILITY_DESCRIPTIONS[user.human.title.special]}`;
+    const newActiveAbilitiesSell = user.getActiveAbilities();
+    if (newActiveAbilitiesSell.length > 0) {
+      const abilityListSell = newActiveAbilitiesSell.map(a => ABILITY_DESCRIPTIONS[a] || a).join('\n  ');
+      newAbilityText = `\n✨ 보유 능력:\n  ${abilityListSell}`;
     }
 
     const text = `💰 판매 완료!
