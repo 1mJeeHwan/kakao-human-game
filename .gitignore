@@ -24,3 +24,6 @@ build/
 
 # Test coverage
 coverage/
+
+# Internal documentation (sensitive)
+doc/
