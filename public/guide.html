@@ -1165,6 +1165,89 @@
     </div>
   </div>
 
+  <!-- 숨겨진 관리자 버튼 -->
+  <div id="secret-admin-trigger" style="position: fixed; bottom: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer; opacity: 0.1;" title=""></div>
+
+  <!-- 1차 비밀번호 모달 -->
+  <div id="password-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9998; display: none; justify-content: center; align-items: center;">
+    <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; text-align: center; max-width: 350px;">
+      <h2 style="color: #ffd700; margin-bottom: 20px;">🔒 접근 제한</h2>
+      <input type="password" id="access-password" placeholder="비밀번호 입력" style="width: 100%; padding: 12px; border: none; border-radius: 5px; margin-bottom: 15px; background: rgba(255,255,255,0.1); color: white; text-align: center; font-size: 18px;">
+      <button onclick="verifyAccessPassword()" style="width: 100%; padding: 12px; background: linear-gradient(90deg, #667eea, #764ba2); border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: bold;">확인</button>
+      <p id="password-error" style="margin-top: 10px; color: #ef4444; display: none;">비밀번호가 틀렸습니다</p>
+      <button onclick="closePasswordModal()" style="margin-top: 15px; background: none; border: none; color: #888; cursor: pointer;">취소</button>
+    </div>
+  </div>
+
+  <!-- 관리자 패널 모달 -->
+  <div id="admin-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; overflow-y: auto;">
+    <div style="max-width: 600px; margin: 20px auto; padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="color: #ffd700;">🔐 관리자 패널</h2>
+        <button onclick="closeAdminPanel()" style="background: #ef4444; border: none; color: white; padding: 8px 16px; border-radius: 5px; cursor: pointer;">닫기</button>
+      </div>
+
+      <!-- 인증 섹션 -->
+      <div id="admin-auth" style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+        <h3 style="margin-bottom: 15px;">🔑 Admin Key 인증</h3>
+        <input type="password" id="admin-key-input" placeholder="Admin Key 입력" style="width: 100%; padding: 12px; border: none; border-radius: 5px; margin-bottom: 10px; background: rgba(255,255,255,0.1); color: white;">
+        <button onclick="authenticateAdmin()" style="width: 100%; padding: 12px; background: linear-gradient(90deg, #667eea, #764ba2); border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: bold;">인증하기</button>
+        <p id="auth-status" style="margin-top: 10px; text-align: center;"></p>
+      </div>
+
+      <!-- 관리자 기능 (인증 후 표시) -->
+      <div id="admin-functions" style="display: none;">
+
+        <!-- 서버 상태 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+          <h3 style="margin-bottom: 15px;">📊 서버 상태</h3>
+          <button onclick="getServerStatus()" style="width: 100%; padding: 10px; background: #3b82f6; border: none; border-radius: 5px; color: white; cursor: pointer;">상태 조회</button>
+          <pre id="status-result" style="margin-top: 10px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px; display: none;"></pre>
+        </div>
+
+        <!-- 플래그 관리 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+          <h3 style="margin-bottom: 15px;">🚫 플래그 관리</h3>
+          <button onclick="getFlaggedUsers()" style="width: 100%; padding: 10px; background: #f59e0b; border: none; border-radius: 5px; color: black; cursor: pointer; margin-bottom: 10px;">플래그된 유저 조회</button>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="unflag-user-id" placeholder="유저 ID" style="flex: 1; padding: 10px; border: none; border-radius: 5px; background: rgba(255,255,255,0.1); color: white;">
+            <button onclick="unflagUser()" style="padding: 10px 20px; background: #22c55e; border: none; border-radius: 5px; color: white; cursor: pointer;">해제</button>
+          </div>
+          <button onclick="unflagAll()" style="width: 100%; padding: 10px; background: #ef4444; border: none; border-radius: 5px; color: white; cursor: pointer; margin-top: 10px;">전체 플래그 초기화</button>
+          <pre id="flag-result" style="margin-top: 10px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px; display: none;"></pre>
+        </div>
+
+        <!-- 유저 조회 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+          <h3 style="margin-bottom: 15px;">👤 유저 조회</h3>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="user-lookup-id" placeholder="유저 ID" style="flex: 1; padding: 10px; border: none; border-radius: 5px; background: rgba(255,255,255,0.1); color: white;">
+            <button onclick="lookupUser()" style="padding: 10px 20px; background: #3b82f6; border: none; border-radius: 5px; color: white; cursor: pointer;">조회</button>
+          </div>
+          <pre id="user-result" style="margin-top: 10px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px; display: none;"></pre>
+        </div>
+
+        <!-- 골드 지급 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+          <h3 style="margin-bottom: 15px;">💰 골드 지급</h3>
+          <input type="text" id="gold-user-id" placeholder="유저 ID" style="width: 100%; padding: 10px; border: none; border-radius: 5px; background: rgba(255,255,255,0.1); color: white; margin-bottom: 10px;">
+          <input type="number" id="gold-amount" placeholder="금액" style="width: 100%; padding: 10px; border: none; border-radius: 5px; background: rgba(255,255,255,0.1); color: white; margin-bottom: 10px;">
+          <input type="text" id="gold-reason" placeholder="사유 (선택)" style="width: 100%; padding: 10px; border: none; border-radius: 5px; background: rgba(255,255,255,0.1); color: white; margin-bottom: 10px;">
+          <button onclick="giveGold()" style="width: 100%; padding: 10px; background: #ffd700; border: none; border-radius: 5px; color: black; cursor: pointer; font-weight: bold;">골드 지급</button>
+          <pre id="gold-result" style="margin-top: 10px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px; display: none;"></pre>
+        </div>
+
+        <!-- 통계 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+          <h3 style="margin-bottom: 15px;">📈 통계 대시보드</h3>
+          <button onclick="getStats()" style="width: 100%; padding: 10px; background: #a855f7; border: none; border-radius: 5px; color: white; cursor: pointer;">통계 조회</button>
+          <pre id="stats-result" style="margin-top: 10px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px; display: none;"></pre>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script>
     // 탭 전환
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1181,6 +1264,159 @@
         document.getElementById(tabId).classList.add('active');
       });
     });
+
+    // ========== 관리자 패널 ==========
+    let adminKey = '';
+    let clickCount = 0;
+    let lastClickTime = 0;
+    const ACCESS_PASSWORD_HASH = 'fcf625250c7331b4de0fc876b29040fb5251b0297420100301f156ceb885c6c8';
+
+    // SHA256 해시 함수
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // 비밀 버튼 - 3초 내 5번 클릭 시 비밀번호 모달 열기
+    document.getElementById('secret-admin-trigger').addEventListener('click', () => {
+      const now = Date.now();
+      if (now - lastClickTime > 3000) {
+        clickCount = 0;
+      }
+      lastClickTime = now;
+      clickCount++;
+
+      if (clickCount >= 5) {
+        clickCount = 0;
+        document.getElementById('password-modal').style.display = 'flex';
+        document.getElementById('access-password').focus();
+      }
+    });
+
+    // 비밀번호 검증
+    async function verifyAccessPassword() {
+      const password = document.getElementById('access-password').value;
+      const hash = await sha256(password);
+
+      if (hash === ACCESS_PASSWORD_HASH) {
+        document.getElementById('password-modal').style.display = 'none';
+        document.getElementById('admin-modal').style.display = 'block';
+        document.getElementById('access-password').value = '';
+        document.getElementById('password-error').style.display = 'none';
+      } else {
+        document.getElementById('password-error').style.display = 'block';
+        document.getElementById('access-password').value = '';
+      }
+    }
+
+    // 엔터키로 비밀번호 제출
+    document.getElementById('access-password').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') verifyAccessPassword();
+    });
+
+    function closePasswordModal() {
+      document.getElementById('password-modal').style.display = 'none';
+      document.getElementById('access-password').value = '';
+      document.getElementById('password-error').style.display = 'none';
+    }
+
+    function closeAdminPanel() {
+      document.getElementById('admin-modal').style.display = 'none';
+    }
+
+    async function authenticateAdmin() {
+      adminKey = document.getElementById('admin-key-input').value;
+      const statusEl = document.getElementById('auth-status');
+
+      try {
+        const res = await fetch('/admin/status', {
+          headers: { 'X-Admin-Key': adminKey }
+        });
+
+        if (res.ok) {
+          statusEl.innerHTML = '<span style="color: #22c55e;">✅ 인증 성공!</span>';
+          document.getElementById('admin-auth').style.display = 'none';
+          document.getElementById('admin-functions').style.display = 'block';
+        } else {
+          statusEl.innerHTML = '<span style="color: #ef4444;">❌ 인증 실패</span>';
+        }
+      } catch (e) {
+        statusEl.innerHTML = '<span style="color: #ef4444;">❌ 연결 오류</span>';
+      }
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      const options = {
+        method,
+        headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }
+      };
+      if (body) options.body = JSON.stringify(body);
+
+      const res = await fetch(endpoint, options);
+      return res.json();
+    }
+
+    async function getServerStatus() {
+      const result = await apiCall('/admin/status');
+      const el = document.getElementById('status-result');
+      el.textContent = JSON.stringify(result, null, 2);
+      el.style.display = 'block';
+    }
+
+    async function getFlaggedUsers() {
+      const result = await apiCall('/admin/flagged');
+      const el = document.getElementById('flag-result');
+      el.textContent = JSON.stringify(result, null, 2);
+      el.style.display = 'block';
+    }
+
+    async function unflagUser() {
+      const userId = document.getElementById('unflag-user-id').value;
+      if (!userId) return alert('유저 ID를 입력하세요');
+      const result = await apiCall(`/admin/unflag/${userId}`, 'POST');
+      const el = document.getElementById('flag-result');
+      el.textContent = JSON.stringify(result, null, 2);
+      el.style.display = 'block';
+    }
+
+    async function unflagAll() {
+      if (!confirm('정말 모든 플래그를 초기화하시겠습니까?')) return;
+      const result = await apiCall('/admin/unflag-all', 'POST');
+      const el = document.getElementById('flag-result');
+      el.textContent = JSON.stringify(result, null, 2);
+      el.style.display = 'block';
+    }
+
+    async function lookupUser() {
+      const userId = document.getElementById('user-lookup-id').value;
+      if (!userId) return alert('유저 ID를 입력하세요');
+      const result = await apiCall(`/admin/user/${userId}`);
+      const el = document.getElementById('user-result');
+      el.textContent = JSON.stringify(result, null, 2);
+      el.style.display = 'block';
+    }
+
+    async function giveGold() {
+      const userId = document.getElementById('gold-user-id').value;
+      const amount = document.getElementById('gold-amount').value;
+      const reason = document.getElementById('gold-reason').value;
+
+      if (!userId || !amount) return alert('유저 ID와 금액을 입력하세요');
+
+      const result = await apiCall('/admin/give-gold', 'POST', { userId, amount: parseInt(amount), reason });
+      const el = document.getElementById('gold-result');
+      el.textContent = JSON.stringify(result, null, 2);
+      el.style.display = 'block';
+    }
+
+    async function getStats() {
+      const result = await apiCall('/admin/stats');
+      const el = document.getElementById('stats-result');
+      el.textContent = JSON.stringify(result, null, 2);
+      el.style.display = 'block';
+    }
   </script>
 </body>
 </html>
