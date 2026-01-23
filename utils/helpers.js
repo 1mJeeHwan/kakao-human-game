@@ -191,12 +191,74 @@ function createKakaoMixedResponse(text, imageUrl, quickReplies = []) {
   return response;
 }
 
+/**
+ * 버튼이 포함된 텍스트카드 응답 (문의하기 등)
+ * @param {string} title - 카드 제목
+ * @param {string} description - 카드 설명
+ * @param {Array} buttons - 버튼 배열
+ * @param {Array} quickReplies - 빠른 응답 버튼 배열
+ * @returns {Object} 카카오 응답 객체
+ */
+function createKakaoTextCardResponse(title, description, buttons = [], quickReplies = []) {
+  const response = {
+    version: '2.0',
+    template: {
+      outputs: [
+        {
+          textCard: {
+            title: title,
+            description: description,
+            buttons: buttons
+          }
+        }
+      ]
+    }
+  };
+
+  if (quickReplies.length > 0) {
+    response.template.quickReplies = quickReplies;
+  }
+
+  return response;
+}
+
+/**
+ * 웹링크 버튼 생성
+ * @param {string} label - 버튼 라벨
+ * @param {string} url - 웹 URL
+ * @returns {Object} 버튼 객체
+ */
+function createWebLinkButton(label, url) {
+  return {
+    action: 'webLink',
+    label: label,
+    webLinkUrl: url
+  };
+}
+
+/**
+ * 메시지 버튼 생성
+ * @param {string} label - 버튼 라벨
+ * @param {string} messageText - 전송할 메시지
+ * @returns {Object} 버튼 객체
+ */
+function createMessageButton(label, messageText) {
+  return {
+    action: 'message',
+    label: label,
+    messageText: messageText
+  };
+}
+
 module.exports = {
   getHumanFullName,
   createKakaoResponse,
   createKakaoCardResponse,
   createKakaoMixedResponse,
+  createKakaoTextCardResponse,
   createQuickReply,
+  createWebLinkButton,
+  createMessageButton,
   DEFAULT_QUICK_REPLIES,
   UPGRADE_QUICK_REPLIES,
   SELL_QUICK_REPLIES,

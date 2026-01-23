@@ -24,6 +24,8 @@ const {
   getHumanFullName,
   createKakaoResponse,
   createKakaoMixedResponse,
+  createKakaoTextCardResponse,
+  createWebLinkButton,
   DEFAULT_QUICK_REPLIES,
   UPGRADE_QUICK_REPLIES,
   SELL_QUICK_REPLIES,
@@ -1124,35 +1126,45 @@ async function getHelp(req, res) {
   }
 }
 
+// 카카오톡 채널 URL (환경변수 또는 기본값)
+const KAKAO_CHANNEL_URL = process.env.KAKAO_CHANNEL_URL || 'https://pf.kakao.com/_xnxaxln/chat';
+
 /**
  * 문의/건의
  */
 async function getContact(req, res) {
   try {
+    const userId = extractUserId(req.body);
+
+    // 유저ID 앞 8자리만 표시 (보안 + 식별용)
+    const shortId = userId ? userId.substring(0, 12) : '알 수 없음';
+
     const text = `📬 문의 및 건의
 ━━━━━━━━━━━━━━━━━━
 
-🎮 게임 관련 문의
-━━━━━━━━━━━━━━
-• 버그 신고
-• 건의 사항
-• 기타 문의
-
-📧 연락처
-━━━━━━━━━━━━━━
-• 카카오톡: @인간키우기
-• 이메일: game@example.com
-• GitHub: github.com/1mJeeHwan/kakao-human-game
-
-⚠️ 주의사항
-━━━━━━━━━━━━━━
-• 비정상 플레이 시 제재될 수 있습니다
-• 데이터 복구 요청은 증빙이 필요합니다
+📋 내 유저ID (문의 시 필수!)
+${shortId}
+↑ 이 ID를 복사해서 문의 시 보내주세요!
 
 ━━━━━━━━━━━━━━━━━━
-💡 빠른 답변을 위해 유저ID를 함께 알려주세요!`;
+🎮 문의 가능 항목
+• 버그 신고
+• 건의 사항
+• 데이터 복구 요청
+• 기타 문의
 
-    return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
+⚠️ 주의사항
+• 유저ID 없이 문의 시 확인 불가
+• 비정상 플레이 시 제재될 수 있습니다
+
+━━━━━━━━━━━━━━━━━━
+💬 아래 버튼을 눌러 1:1 채팅으로 문의!`;
+
+    const buttons = [
+      createWebLinkButton('💬 1:1 채팅 문의', KAKAO_CHANNEL_URL)
+    ];
+
+    return res.json(createKakaoTextCardResponse('📬 문의하기', text, buttons, DEFAULT_QUICK_REPLIES));
 
   } catch (error) {
     console.error('getContact 오류:', error);
