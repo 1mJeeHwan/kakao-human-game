@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>인간 키우기 - 게임 가이드</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      background: linear-gradient(90deg, #ffd700, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(90deg, #ffd700, #ff6b6b);
+      color: #000;
+      font-weight: bold;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .section {
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+
+    .section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .grade-section {
+      margin-bottom: 25px;
+    }
+
+    .grade-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+
+    .grade-badge {
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .grade-common { background: #808080; }
+    .grade-uncommon { background: #22c55e; }
+    .grade-rare { background: #3b82f6; }
+    .grade-epic { background: #a855f7; }
+    .grade-legendary { background: linear-gradient(90deg, #ffd700, #ff6b6b); color: #000; }
+    .grade-animal { background: linear-gradient(90deg, #f472b6, #c084fc); }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 15px;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .card-info {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 5px;
+    }
+
+    .card-ability {
+      background: rgba(255,215,0,0.15);
+      border-left: 3px solid #ffd700;
+      padding: 8px 12px;
+      margin-top: 10px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+    }
+
+    .card-abilities {
+      margin-top: 10px;
+    }
+
+    .card-abilities .card-ability {
+      margin-bottom: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    th {
+      background: rgba(255,255,255,0.1);
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .success { color: #4ade80; }
+    .fail { color: #fbbf24; }
+    .death { color: #ef4444; }
+
+    .ability-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+
+    .ability-icon {
+      font-size: 2rem;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .ability-info h3 {
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .ability-info p {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .ability-type {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      margin-top: 8px;
+    }
+
+    .type-consumable { background: #ef4444; }
+    .type-passive { background: #22c55e; }
+
+    .prob-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.2);
+      margin-left: 5px;
+    }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 1.8rem; }
+      .tabs { gap: 5px; }
+      .tab-btn { padding: 10px 16px; font-size: 0.9rem; }
+      .card-grid { grid-template-columns: 1fr; }
+      th, td { padding: 8px 4px; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎮 인간 키우기 게임 가이드</h1>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="abilities">✨ 특수 능력</button>
+      <button class="tab-btn" data-tab="titles">🏷️ 칭호</button>
+      <button class="tab-btn" data-tab="jobs">💼 직업</button>
+      <button class="tab-btn" data-tab="upgrade">📈 강화 확률</button>
+    </div>
+
+    <!-- 특수 능력 탭 -->
+    <div id="abilities" class="tab-content active">
+      <div class="section">
+        <h2>✨ 특수 능력 목록</h2>
+
+        <div class="ability-card">
+          <div class="ability-icon">💫</div>
+          <div class="ability-info">
+            <h3>사망 1회 방지</h3>
+            <p>사망 판정 시 100% 확률로 실패로 전환합니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">🔰</div>
+          <div class="ability-info">
+            <h3>사망 시 50% 확률로 방어</h3>
+            <p>사망 판정 시 50% 확률로 실패로 전환합니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">🔄</div>
+          <div class="ability-info">
+            <h3>실패→성공 변환</h3>
+            <p>실패 판정 시 100% 확률로 성공으로 전환합니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">🍀</div>
+          <div class="ability-info">
+            <h3>실패 시 30% 확률로 성공</h3>
+            <p>실패 판정 시 30% 확률로 성공으로 전환합니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">⚡</div>
+          <div class="ability-info">
+            <h3>성공 시 2레벨 상승</h3>
+            <p>성공 시 1레벨이 아닌 2레벨이 상승합니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">📈</div>
+          <div class="ability-info">
+            <h3>사망해도 레벨 유지</h3>
+            <p>사망 시 새 인간이 현재 레벨을 유지한 채 시작합니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">💰</div>
+          <div class="ability-info">
+            <h3>판매가 2배</h3>
+            <p>인간 판매 시 판매 금액이 2배가 됩니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">💎</div>
+          <div class="ability-info">
+            <h3>판매 시 +10,000G</h3>
+            <p>인간 판매 시 추가로 10,000G를 획득합니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">💸</div>
+          <div class="ability-info">
+            <h3>성장 비용 50% 할인</h3>
+            <p>다음 강화 비용이 50% 할인됩니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">🎰</div>
+          <div class="ability-info">
+            <h3>잭팟 확률 2배</h3>
+            <p>사망 시 파괴 지원금 잭팟 확률이 2배가 됩니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+
+        <div class="ability-card">
+          <div class="ability-icon">🛡️</div>
+          <div class="ability-info">
+            <h3>파괴 지원금 2배</h3>
+            <p>사망 시 받는 파괴 지원금이 2배가 됩니다.</p>
+            <span class="ability-type type-consumable">1회용</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 칭호 탭 -->
+    <div id="titles" class="tab-content">
+      <div class="section">
+        <h2>🏷️ 칭호 목록</h2>
+
+        <!-- 전설 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-legendary">🌟 전설</span>
+            <span class="prob-badge">2%</span>
+            <span>+100% 판매가 보너스 | 다중 능력</span>
+          </div>
+          <div class="card-grid">
+            <div class="card">
+              <div class="card-title">전설의</div>
+              <div class="card-abilities">
+                <div class="card-ability">💫 사망 1회 방지</div>
+                <div class="card-ability">🍀 실패 시 30% 확률로 성공</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">신화적인</div>
+              <div class="card-abilities">
+                <div class="card-ability">⚡ 성공 시 2레벨 상승</div>
+                <div class="card-ability">🔰 사망 시 50% 확률로 방어</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">불멸의</div>
+              <div class="card-abilities">
+                <div class="card-ability">💫 사망 1회 방지</div>
+                <div class="card-ability">📈 사망해도 레벨 유지</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">태초의</div>
+              <div class="card-abilities">
+                <div class="card-ability">💰 판매가 2배</div>
+                <div class="card-ability">💎 판매 시 +10,000G</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">절대적인</div>
+              <div class="card-abilities">
+                <div class="card-ability">🍀 실패 시 30% 확률로 성공</div>
+                <div class="card-ability">🔰 사망 시 50% 확률로 방어</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">초월한</div>
+              <div class="card-abilities">
+                <div class="card-ability">🔄 실패→성공 변환</div>
+                <div class="card-ability">⚡ 성공 시 2레벨 상승</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">우주의</div>
+              <div class="card-abilities">
+                <div class="card-ability">🛡️ 파괴 지원금 2배</div>
+                <div class="card-ability">💫 사망 1회 방지</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">심연의</div>
+              <div class="card-abilities">
+                <div class="card-ability">🎰 잭팟 확률 2배</div>
+                <div class="card-ability">💸 성장 비용 50% 할인</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 영웅 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-epic">⭐ 영웅</span>
+            <span class="prob-badge">8%</span>
+            <span>+50% 판매가 보너스</span>
+          </div>
+          <div class="card-grid">
+            <div class="card">
+              <div class="card-title">위대한</div>
+              <div class="card-ability">⚡ 성공 시 2레벨 상승</div>
+            </div>
+            <div class="card">
+              <div class="card-title">고귀한</div>
+              <div class="card-ability">📈 사망해도 레벨 유지</div>
+            </div>
+            <div class="card">
+              <div class="card-title">성스러운</div>
+              <div class="card-ability">🔰 사망 시 50% 확률로 방어</div>
+            </div>
+            <div class="card">
+              <div class="card-title">신성한</div>
+              <div class="card-ability">💫 사망 1회 방지</div>
+            </div>
+            <div class="card">
+              <div class="card-title">불굴의</div>
+              <div class="card-ability">🔄 실패→성공 변환</div>
+            </div>
+            <div class="card">
+              <div class="card-title">축복받은</div>
+              <div class="card-ability">💫 사망 1회 방지</div>
+            </div>
+            <div class="card">
+              <div class="card-title">황금빛</div>
+              <div class="card-ability">💎 판매 시 +10,000G</div>
+            </div>
+            <div class="card">
+              <div class="card-title">도박사</div>
+              <div class="card-ability">🎰 잭팟 확률 2배</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 희귀 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-rare">✨ 희귀</span>
+            <span class="prob-badge">20%</span>
+            <span>+25% 판매가 보너스</span>
+          </div>
+          <div class="card-grid">
+            <div class="card">
+              <div class="card-title">용맹한</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">현명한</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">천재적인</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">카리스마 있는</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">총명한</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">기품있는</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">신비로운</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">영롱한</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">빛나는</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">찬란한</div>
+              <div class="card-info">능력 없음</div>
+            </div>
+            <div class="card">
+              <div class="card-title">행운의</div>
+              <div class="card-ability">🍀 실패 시 30% 확률로 성공</div>
+            </div>
+            <div class="card">
+              <div class="card-title">알뜰한</div>
+              <div class="card-ability">💸 성장 비용 50% 할인</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 고급 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-uncommon">🔹 고급</span>
+            <span class="prob-badge">30%</span>
+            <span>+10% 판매가 보너스</span>
+          </div>
+          <div class="card-grid">
+            <div class="card"><div class="card-title">부지런한</div></div>
+            <div class="card"><div class="card-title">성실한</div></div>
+            <div class="card"><div class="card-title">밝은</div></div>
+            <div class="card"><div class="card-title">듬직한</div></div>
+            <div class="card"><div class="card-title">정직한</div></div>
+            <div class="card"><div class="card-title">활기찬</div></div>
+            <div class="card"><div class="card-title">열정적인</div></div>
+            <div class="card"><div class="card-title">다정한</div></div>
+            <div class="card"><div class="card-title">따뜻한</div></div>
+            <div class="card"><div class="card-title">명랑한</div></div>
+            <div class="card"><div class="card-title">반짝반짝</div></div>
+            <div class="card"><div class="card-title">깔끔한</div></div>
+            <div class="card"><div class="card-title">단정한</div></div>
+            <div class="card"><div class="card-title">귀여운</div></div>
+            <div class="card"><div class="card-title">멋진</div></div>
+          </div>
+        </div>
+
+        <!-- 일반 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-common">일반</span>
+            <span class="prob-badge">40%</span>
+            <span>보너스 없음</span>
+          </div>
+          <div class="card-grid">
+            <div class="card"><div class="card-title">평범한</div></div>
+            <div class="card"><div class="card-title">순수한</div></div>
+            <div class="card"><div class="card-title">착한</div></div>
+            <div class="card"><div class="card-title">소심한</div></div>
+            <div class="card"><div class="card-title">평화로운</div></div>
+            <div class="card"><div class="card-title">조용한</div></div>
+            <div class="card"><div class="card-title">무난한</div></div>
+            <div class="card"><div class="card-title">심심한</div></div>
+            <div class="card"><div class="card-title">졸린</div></div>
+            <div class="card"><div class="card-title">배고픈</div></div>
+            <div class="card"><div class="card-title">냄새나는</div></div>
+            <div class="card"><div class="card-title">찌질한</div></div>
+            <div class="card"><div class="card-title">한심한</div></div>
+            <div class="card"><div class="card-title">불쌍한</div></div>
+            <div class="card"><div class="card-title">눈물나는</div></div>
+            <div class="card"><div class="card-title">멍청한</div></div>
+            <div class="card"><div class="card-title">어리버리한</div></div>
+            <div class="card"><div class="card-title">띨띨한</div></div>
+            <div class="card"><div class="card-title">덜렁대는</div></div>
+            <div class="card"><div class="card-title">허당인</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 직업 탭 -->
+    <div id="jobs" class="tab-content">
+      <div class="section">
+        <h2>💼 직업 목록</h2>
+
+        <!-- 동물 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-animal">🐾 동물</span>
+            <span class="prob-badge">0.5%</span>
+            <span>+80% 판매가 보너스 | 직업 변경 불가</span>
+          </div>
+          <div class="card-grid">
+            <div class="card"><div class="card-title">🐕 강아지</div></div>
+            <div class="card"><div class="card-title">🐱 고양이</div></div>
+            <div class="card"><div class="card-title">🐰 토끼</div></div>
+            <div class="card"><div class="card-title">🐹 햄스터</div></div>
+            <div class="card"><div class="card-title">🐧 펭귄</div></div>
+            <div class="card"><div class="card-title">🐼 판다</div></div>
+            <div class="card"><div class="card-title">🦊 여우</div></div>
+            <div class="card"><div class="card-title">🐻 곰</div></div>
+            <div class="card"><div class="card-title">🐺 늑대</div></div>
+            <div class="card"><div class="card-title">🦁 사자</div></div>
+            <div class="card"><div class="card-title">🦎 도마뱀</div></div>
+          </div>
+        </div>
+
+        <!-- 전설 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-legendary">🌟 전설</span>
+            <span class="prob-badge">5%</span>
+            <span>+60% 판매가 보너스</span>
+          </div>
+          <div class="card-grid">
+            <div class="card"><div class="card-title">용사</div></div>
+            <div class="card"><div class="card-title">대마법사</div></div>
+            <div class="card"><div class="card-title">연금술사</div></div>
+            <div class="card"><div class="card-title">용병</div></div>
+            <div class="card"><div class="card-title">암살자</div></div>
+            <div class="card"><div class="card-title">현자</div></div>
+            <div class="card"><div class="card-title">드래곤슬레이어</div></div>
+            <div class="card"><div class="card-title">대부호</div></div>
+          </div>
+        </div>
+
+        <!-- 희귀 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-rare">✨ 희귀</span>
+            <span class="prob-badge">15%</span>
+            <span>+30% 판매가 보너스</span>
+          </div>
+          <div class="card-grid">
+            <div class="card"><div class="card-title">의사</div></div>
+            <div class="card"><div class="card-title">변호사</div></div>
+            <div class="card"><div class="card-title">교수</div></div>
+            <div class="card"><div class="card-title">연구원</div></div>
+            <div class="card"><div class="card-title">마법사</div></div>
+            <div class="card"><div class="card-title">기사</div></div>
+            <div class="card"><div class="card-title">탐정</div></div>
+            <div class="card"><div class="card-title">모험가</div></div>
+            <div class="card"><div class="card-title">파일럿</div></div>
+            <div class="card"><div class="card-title">외교관</div></div>
+            <div class="card"><div class="card-title">프로게이머</div></div>
+            <div class="card"><div class="card-title">사업가</div></div>
+          </div>
+        </div>
+
+        <!-- 고급 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-uncommon">🔹 고급</span>
+            <span class="prob-badge">30%</span>
+            <span>+15% 판매가 보너스</span>
+          </div>
+          <div class="card-grid">
+            <div class="card"><div class="card-title">요리사</div></div>
+            <div class="card"><div class="card-title">개발자</div></div>
+            <div class="card"><div class="card-title">디자이너</div></div>
+            <div class="card"><div class="card-title">건축가</div></div>
+            <div class="card"><div class="card-title">가수</div></div>
+            <div class="card"><div class="card-title">배우</div></div>
+            <div class="card"><div class="card-title">화가</div></div>
+            <div class="card"><div class="card-title">운동선수</div></div>
+            <div class="card"><div class="card-title">전사</div></div>
+            <div class="card"><div class="card-title">궁수</div></div>
+            <div class="card"><div class="card-title">사진작가</div></div>
+            <div class="card"><div class="card-title">작가</div></div>
+            <div class="card"><div class="card-title">유튜버</div></div>
+            <div class="card"><div class="card-title">스트리머</div></div>
+          </div>
+        </div>
+
+        <!-- 일반 등급 -->
+        <div class="grade-section">
+          <div class="grade-title">
+            <span class="grade-badge grade-common">일반</span>
+            <span class="prob-badge">49.5%</span>
+            <span>보너스 없음</span>
+          </div>
+          <div class="card-grid">
+            <div class="card"><div class="card-title">회사원</div></div>
+            <div class="card"><div class="card-title">공무원</div></div>
+            <div class="card"><div class="card-title">알바생</div></div>
+            <div class="card"><div class="card-title">백수</div></div>
+            <div class="card"><div class="card-title">학생</div></div>
+            <div class="card"><div class="card-title">농부</div></div>
+            <div class="card"><div class="card-title">상인</div></div>
+            <div class="card"><div class="card-title">운전기사</div></div>
+            <div class="card"><div class="card-title">청소부</div></div>
+            <div class="card"><div class="card-title">경비원</div></div>
+            <div class="card"><div class="card-title">배달원</div></div>
+            <div class="card"><div class="card-title">점원</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 강화 확률 탭 -->
+    <div id="upgrade" class="tab-content">
+      <div class="section">
+        <h2>📈 강화 확률표</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>강화</th>
+              <th class="success">성공</th>
+              <th class="fail">실패</th>
+              <th class="death">사망</th>
+              <th>비용</th>
+              <th>판매가</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>0→1</td><td class="success">98%</td><td class="fail">1%</td><td class="death">1%</td><td>2G</td><td>20G</td></tr>
+            <tr><td>1→2</td><td class="success">96%</td><td class="fail">3%</td><td class="death">1%</td><td>5G</td><td>40G</td></tr>
+            <tr><td>2→3</td><td class="success">93%</td><td class="fail">6%</td><td class="death">1%</td><td>10G</td><td>80G</td></tr>
+            <tr><td>3→4</td><td class="success">89%</td><td class="fail">9%</td><td class="death">2%</td><td>20G</td><td>160G</td></tr>
+            <tr><td>4→5</td><td class="success">84%</td><td class="fail">14%</td><td class="death">2%</td><td>40G</td><td>320G</td></tr>
+            <tr><td>5→6</td><td class="success">70%</td><td class="fail">25%</td><td class="death">5%</td><td>80G</td><td>640G</td></tr>
+            <tr><td>6→7</td><td class="success">66%</td><td class="fail">28%</td><td class="death">6%</td><td>240G</td><td>1,920G</td></tr>
+            <tr><td>7→8</td><td class="success">44%</td><td class="fail">31%</td><td class="death">25%</td><td>720G</td><td>5,760G</td></tr>
+            <tr><td>8→9</td><td class="success">36%</td><td class="fail">35%</td><td class="death">29%</td><td>1,400G</td><td>17,280G</td></tr>
+            <tr><td>9→10</td><td class="success">28%</td><td class="fail">39%</td><td class="death">33%</td><td>4,300G</td><td>51,840G</td></tr>
+            <tr><td>10→11</td><td class="success">20%</td><td class="fail">37%</td><td class="death">43%</td><td>12,000G</td><td>186,624G</td></tr>
+            <tr><td>11→12</td><td class="success">18%</td><td class="fail">32%</td><td class="death">50%</td><td>26,000G</td><td>671,846G</td></tr>
+            <tr><td>12→13</td><td class="success">12%</td><td class="fail">28%</td><td class="death">60%</td><td>89,000G</td><td>2,418,647G</td></tr>
+            <tr><td>13→14</td><td class="success">7%</td><td class="fail">23%</td><td class="death">70%</td><td>302,000G</td><td>8,707,130G</td></tr>
+            <tr><td>14→15</td><td class="success">3%</td><td class="fail">17%</td><td class="death">80%</td><td>1,560,000G</td><td>31,345,668G</td></tr>
+            <tr><td>15→16</td><td class="success">2%</td><td class="fail">13%</td><td class="death">85%</td><td>3,760,000G</td><td>112,844,406G</td></tr>
+            <tr><td>16→17</td><td class="success">1.5%</td><td class="fail">10.5%</td><td class="death">88%</td><td>10,150,000G</td><td>406,239,862G</td></tr>
+            <tr><td>17→18</td><td class="success">1%</td><td class="fail">9%</td><td class="death">90%</td><td>24,370,000G</td><td>1,462,463,502G</td></tr>
+            <tr><td>18→19</td><td class="success">0.5%</td><td class="fail">7.5%</td><td class="death">92%</td><td>43,870,000G</td><td>5,264,868,607G</td></tr>
+            <tr><td>19→20</td><td class="success">0.1%</td><td class="fail">4.9%</td><td class="death">95%</td><td>31,580,000G</td><td>18,953,526,985G</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>💀 파괴 지원금</h2>
+        <p style="margin-bottom: 15px; color: rgba(255,255,255,0.7);">사망 시 해당 인간에게 투자한 총 금액의 일부를 환급받습니다.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>환급률</th>
+              <th>확률</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>환급 없음</td><td>70%</td></tr>
+            <tr><td>50% 환급</td><td>20%</td></tr>
+            <tr><td>70% 환급</td><td>7%</td></tr>
+            <tr><td>90% 환급</td><td>2%</td></tr>
+            <tr><td>100% 환급</td><td>0.9%</td></tr>
+            <tr><td style="color: #ffd700;">🎰 200% 환급 (잭팟!)</td><td style="color: #ffd700;">0.1%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>🎲 변이 확률</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>이벤트</th>
+              <th>확률</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>강화 성공 시 칭호 변경</td><td>20%</td></tr>
+            <tr><td>강화 성공 시 직업 변경</td><td>15%</td></tr>
+            <tr><td>강화 실패 시 백수 전락</td><td>3%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 탭 전환
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // 버튼 활성화
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // 컨텐츠 전환
+        const tabId = btn.dataset.tab;
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
