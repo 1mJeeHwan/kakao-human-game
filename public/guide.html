@@ -1269,15 +1269,6 @@
     let adminKey = '';
     let clickCount = 0;
     let lastClickTime = 0;
-    const ACCESS_PASSWORD_HASH = 'fcf625250c7331b4de0fc876b29040fb5251b0297420100301f156ceb885c6c8';
-
-    // SHA256 해시 함수
-    async function sha256(message) {
-      const msgBuffer = new TextEncoder().encode(message);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
 
     // 비밀 버튼 - 3초 내 5번 클릭 시 비밀번호 모달 열기
     document.getElementById('secret-admin-trigger').addEventListener('click', () => {
@@ -1295,19 +1286,55 @@
       }
     });
 
-    // 비밀번호 검증
+    // 비밀번호 검증 (서버 측)
     async function verifyAccessPassword() {
+      const errorEl = document.getElementById('password-error');
       const password = document.getElementById('access-password').value;
-      const hash = await sha256(password);
 
-      if (hash === ACCESS_PASSWORD_HASH) {
-        document.getElementById('password-modal').style.display = 'none';
-        document.getElementById('admin-modal').style.display = 'block';
-        document.getElementById('access-password').value = '';
-        document.getElementById('password-error').style.display = 'none';
-      } else {
-        document.getElementById('password-error').style.display = 'block';
-        document.getElementById('access-password').value = '';
+      if (!password) {
+        errorEl.textContent = '비밀번호를 입력하세요';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch(API_BASE + '/admin/verify-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          document.getElementById('password-modal').style.display = 'none';
+          document.getElementById('admin-modal').style.display = 'block';
+          document.getElementById('access-password').value = '';
+          errorEl.style.display = 'none';
+        } else if (res.status === 429) {
+          // 잠금 상태
+          const mins = Math.floor(data.lockoutSeconds / 60);
+          const secs = data.lockoutSeconds % 60;
+          errorEl.textContent = `🔒 ${mins}분 ${secs}초 후 다시 시도하세요`;
+          errorEl.style.display = 'block';
+          document.getElementById('access-password').value = '';
+        } else {
+          // 비밀번호 오류
+          if (data.remainingAttempts !== undefined) {
+            if (data.remainingAttempts === 0) {
+              errorEl.textContent = '🔒 5회 실패. 5분간 잠금됩니다.';
+            } else {
+              errorEl.textContent = `❌ 비밀번호 오류 (남은 시도: ${data.remainingAttempts}회)`;
+            }
+          } else {
+            errorEl.textContent = '❌ 비밀번호 오류';
+          }
+          errorEl.style.display = 'block';
+          document.getElementById('access-password').value = '';
+        }
+      } catch (e) {
+        errorEl.textContent = '❌ 서버 연결 오류';
+        errorEl.style.display = 'block';
       }
     }
 

@@ -4,9 +4,65 @@
  */
 
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const User = require('../models/User');
 const { FLAGGED_USERS, userCooldowns, userRequestHistory } = require('../controllers/gameController');
+
+// 비밀번호 시도 제한
+const passwordAttempts = new Map();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 5 * 60 * 1000; // 5분
+
+/**
+ * 1차 비밀번호 검증 (Admin Key 없이 접근 가능)
+ * POST /admin/verify-password
+ */
+router.post('/verify-password', (req, res) => {
+  const { password } = req.body;
+  const clientIP = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+
+  // 환경변수 확인
+  if (!process.env.ADMIN_PASSWORD_HASH || !process.env.ADMIN_PASSWORD_SALT) {
+    return res.status(500).json({ error: 'Password not configured' });
+  }
+
+  // 잠금 확인
+  const attemptInfo = passwordAttempts.get(clientIP) || { count: 0, lockUntil: 0 };
+  if (Date.now() < attemptInfo.lockUntil) {
+    const remaining = Math.ceil((attemptInfo.lockUntil - Date.now()) / 1000);
+    return res.status(429).json({
+      error: 'Too many attempts',
+      lockoutSeconds: remaining
+    });
+  }
+
+  // 비밀번호 해시 생성 (salt + password)
+  const hash = crypto
+    .createHash('sha256')
+    .update(process.env.ADMIN_PASSWORD_SALT + password)
+    .digest('hex');
+
+  if (hash === process.env.ADMIN_PASSWORD_HASH) {
+    // 성공 시 시도 횟수 초기화
+    passwordAttempts.delete(clientIP);
+    return res.json({ success: true });
+  } else {
+    // 실패 시 시도 횟수 증가
+    attemptInfo.count++;
+    if (attemptInfo.count >= MAX_ATTEMPTS) {
+      attemptInfo.lockUntil = Date.now() + LOCKOUT_DURATION;
+      attemptInfo.count = 0;
+    }
+    passwordAttempts.set(clientIP, attemptInfo);
+
+    const remaining = MAX_ATTEMPTS - attemptInfo.count;
+    return res.status(401).json({
+      error: 'Invalid password',
+      remainingAttempts: remaining > 0 ? remaining : 0
+    });
+  }
+});
 
 // 관리자 인증 미들웨어
 function adminAuth(req, res, next) {
@@ -23,7 +79,7 @@ function adminAuth(req, res, next) {
   next();
 }
 
-// 모든 관리자 라우트에 인증 적용
+// 이하 라우트는 Admin Key 필요
 router.use(adminAuth);
 
 /**
