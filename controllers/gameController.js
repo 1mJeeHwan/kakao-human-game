@@ -1132,11 +1132,6 @@ async function getContact(req, res) {
     const text = `📬 문의 및 건의
 ━━━━━━━━━━━━━━━━━━
 
-🎮 게임 관련 문의
-• 버그 신고
-• 건의 사항
-• 기타 문의
-
 📧 GitHub Issues
 github.com/1mJeeHwan/kakao-human-game
 
