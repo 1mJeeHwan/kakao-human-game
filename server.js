@@ -19,7 +19,15 @@ const PORT = process.env.PORT || 3000;
 
 // 보안 미들웨어
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }  // 이미지 외부 접근 허용
+  crossOriginResourcePolicy: { policy: "cross-origin" },  // 이미지 외부 접근 허용
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],  // 인라인 스크립트 허용 (guide.html)
+      styleSrc: ["'self'", "'unsafe-inline'"],   // 인라인 스타일 허용
+      imgSrc: ["'self'", "data:", "https:"],     // 외부 이미지 허용
+    }
+  }
 }));
 
 // 응답 압축 (네트워크 대역폭 절약)
