@@ -35,6 +35,93 @@ const { getJobImage, getStatusImage } = require('../utils/images');
 const { checkSpecialEnding } = require('../utils/specialEndings');
 const { checkAchievements, getAchievementProgress, formatAchievement, ACHIEVEMENTS } = require('../utils/achievements');
 
+// ========== 봇 방지 시스템 ==========
+
+// 유저별 쿨다운 추적 (메모리 기반)
+const userCooldowns = new Map();
+
+// 유저별 요청 기록 (이상 감지용)
+const userRequestHistory = new Map();
+
+// 설정
+const COOLDOWN_MS = 1000;           // 강화 쿨다운: 1초
+const ANOMALY_WINDOW_MS = 60000;    // 이상 감지 윈도우: 1분
+const ANOMALY_THRESHOLD = 60;       // 1분에 60회 이상 시 이상 감지
+const FLAGGED_USERS = new Set();    // 플래그된 유저 목록
+
+/**
+ * 쿨다운 체크
+ * @returns {Object} { allowed: boolean, remainingMs: number }
+ */
+function checkCooldown(userId) {
+  const now = Date.now();
+  const lastRequest = userCooldowns.get(userId) || 0;
+  const elapsed = now - lastRequest;
+
+  if (elapsed < COOLDOWN_MS) {
+    return { allowed: false, remainingMs: COOLDOWN_MS - elapsed };
+  }
+
+  userCooldowns.set(userId, now);
+  return { allowed: true, remainingMs: 0 };
+}
+
+/**
+ * 이상 행동 감지
+ * @returns {Object} { suspicious: boolean, requestCount: number, flagged: boolean }
+ */
+function detectAnomaly(userId) {
+  const now = Date.now();
+
+  // 유저의 요청 기록 가져오기
+  let history = userRequestHistory.get(userId) || [];
+
+  // 1분 이내 요청만 유지
+  history = history.filter(t => now - t < ANOMALY_WINDOW_MS);
+  history.push(now);
+  userRequestHistory.set(userId, history);
+
+  const requestCount = history.length;
+  const suspicious = requestCount >= ANOMALY_THRESHOLD;
+
+  // 임계치 초과 시 플래그
+  if (suspicious && !FLAGGED_USERS.has(userId)) {
+    FLAGGED_USERS.add(userId);
+    console.warn(`🚨 [ANOMALY] User ${userId} flagged: ${requestCount} requests/min`);
+  }
+
+  return {
+    suspicious,
+    requestCount,
+    flagged: FLAGGED_USERS.has(userId)
+  };
+}
+
+// 메모리 정리 (1시간마다 오래된 데이터 삭제)
+setInterval(() => {
+  const now = Date.now();
+  const ONE_HOUR = 3600000;
+
+  for (const [userId, lastTime] of userCooldowns.entries()) {
+    if (now - lastTime > ONE_HOUR) {
+      userCooldowns.delete(userId);
+    }
+  }
+
+  for (const [userId, history] of userRequestHistory.entries()) {
+    const recent = history.filter(t => now - t < ANOMALY_WINDOW_MS);
+    if (recent.length === 0) {
+      userRequestHistory.delete(userId);
+    } else {
+      userRequestHistory.set(userId, recent);
+    }
+  }
+
+  console.log(`🧹 [CLEANUP] Cooldowns: ${userCooldowns.size}, Histories: ${userRequestHistory.size}, Flagged: ${FLAGGED_USERS.size}`);
+}, 3600000);
+
+// ========== 게임 로직 ==========
+
 /**
  * 게임 시작 / 상태 조회
  */
@@ -99,6 +186,19 @@ async function upgradeHuman(req, res) {
 
     if (!userId) {
       return res.json(createKakaoResponse('유저 정보를 찾을 수 없습니다.'));
+    }
+
+    // 🛡️ 봇 방지: 쿨다운 체크
+    const cooldownResult = checkCooldown(userId);
+    if (!cooldownResult.allowed) {
+      return res.json(createKakaoResponse('⏳ 너무 빨라요! 잠시 후 다시 시도해주세요.'));
+    }
+
+    // 🛡️ 봇 방지: 이상 감지
+    const anomalyResult = detectAnomaly(userId);
+    if (anomalyResult.flagged) {
+      console.warn(`🚨 [BLOCKED] Flagged user attempted: ${userId}`);
+      return res.json(createKakaoResponse('⚠️ 비정상적인 활동이 감지되었습니다.\n잠시 후 다시 시도해주세요.'));
     }
 
     const user = await User.findOrCreate(userId);
