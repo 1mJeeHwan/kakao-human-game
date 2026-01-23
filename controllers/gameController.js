@@ -474,7 +474,7 @@ async function sellHuman(req, res) {
     }
 
     let sellPrice = getSellPrice(human.level, human.title.bonusRate, human.job.bonusRate);
-    const basePrice = Math.pow(2, human.level) * SELL_PRICE_MULTIPLIER;
+    const basePrice = getSellPrice(human.level, 0, 0);  // 보너스 없는 순수 기본가
     const titleBonus = Math.round(human.title.bonusRate * 100);
     const jobBonus = Math.round(human.job.bonusRate * 100);
 
