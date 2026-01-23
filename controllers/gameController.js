@@ -408,10 +408,31 @@ async function sellHuman(req, res) {
       return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
     }
 
-    const sellPrice = getSellPrice(human.level, human.title.bonusRate, human.job.bonusRate);
+    let sellPrice = getSellPrice(human.level, human.title.bonusRate, human.job.bonusRate);
     const basePrice = Math.pow(2, human.level) * SELL_PRICE_MULTIPLIER;
     const titleBonus = Math.round(human.title.bonusRate * 100);
     const jobBonus = Math.round(human.job.bonusRate * 100);
+
+    // 특수 능력: 판매 시 추가 골드 (+10,000G)
+    let bonusGoldText = '';
+    const bonusGoldCount = user.countAbility(SPECIAL_ABILITIES.BONUS_GOLD);
+    if (bonusGoldCount > 0) {
+      const bonusGold = 10000 * bonusGoldCount;
+      sellPrice += bonusGold;
+      bonusGoldText = `\n- 💎 보너스 골드: +${formatGold(bonusGold)}`;
+      // 사용 처리 (보유한 모든 BONUS_GOLD 능력 사용)
+      for (let i = 0; i < bonusGoldCount; i++) {
+        user.useAbility(SPECIAL_ABILITIES.BONUS_GOLD);
+      }
+    }
+
+    // 특수 능력: 판매가 2배
+    let doubleSellText = '';
+    if (user.hasAbility(SPECIAL_ABILITIES.DOUBLE_SELL)) {
+      sellPrice *= 2;
+      doubleSellText = '\n- 💰 판매가 2배 적용!';
+      user.useAbility(SPECIAL_ABILITIES.DOUBLE_SELL);
+    }
 
     const soldHumanName = getHumanFullName(human);
 
@@ -446,7 +467,7 @@ ${soldHumanName}
 💵 정산 내역
 - 기본가: ${formatGold(basePrice)}
 - 칭호 보너스: +${titleBonus}%
-- 직업 보너스: +${jobBonus}%
+- 직업 보너스: +${jobBonus}%${bonusGoldText}${doubleSellText}
 ━━━━━━━━━━━━━━━━━━
 💵 총 획득: ${formatGold(sellPrice)}
 
