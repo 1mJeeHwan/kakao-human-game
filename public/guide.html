@@ -228,12 +228,131 @@
       margin-left: 5px;
     }
 
+    /* 시스템 설명 카드 */
+    .system-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .system-card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .system-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: #ffd700;
+    }
+
+    .system-card p {
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 10px;
+    }
+
+    .system-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+    }
+
+    .system-list li {
+      padding: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .system-list li:last-child {
+      border-bottom: none;
+    }
+
+    .warning-box {
+      background: rgba(239, 68, 68, 0.2);
+      border-left: 3px solid #ef4444;
+      padding: 10px 15px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    .highlight {
+      color: #ffd700;
+      font-weight: bold;
+    }
+
+    .sub-text {
+      font-size: 0.85rem !important;
+      color: rgba(255,255,255,0.6) !important;
+    }
+
+    /* 능력 발동 흐름도 */
+    .flow-container {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 15px;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 15px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .flow-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .flow-number {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(90deg, #ffd700, #ff6b6b);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .flow-content {
+      flex: 1;
+    }
+
+    .flow-content h4 {
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .flow-content p {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .flow-arrow {
+      text-align: center;
+      font-size: 1.5rem;
+      color: rgba(255,255,255,0.3);
+      margin: 5px 0;
+    }
+
     @media (max-width: 768px) {
       h1 { font-size: 1.8rem; }
       .tabs { gap: 5px; }
       .tab-btn { padding: 10px 16px; font-size: 0.9rem; }
       .card-grid { grid-template-columns: 1fr; }
       th, td { padding: 8px 4px; font-size: 0.85rem; }
+      .system-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -250,6 +369,49 @@
 
     <!-- 특수 능력 탭 -->
     <div id="abilities" class="tab-content active">
+      <!-- 능력 발동 순서 -->
+      <div class="section">
+        <h2>⚙️ 능력 발동 순서</h2>
+        <p style="margin-bottom: 15px; color: rgba(255,255,255,0.7);">강화 시 특수 능력은 아래 순서로 체크됩니다.</p>
+
+        <div class="flow-container">
+          <div class="flow-step">
+            <div class="flow-number">1</div>
+            <div class="flow-content">
+              <h4>강화 결과 계산</h4>
+              <p>성공 / 실패 / 사망 중 하나가 결정됩니다.</p>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+
+          <div class="flow-step">
+            <div class="flow-number">2</div>
+            <div class="flow-content">
+              <h4>실패 → 성공 변환 체크</h4>
+              <p>🔄 실패→성공 변환 (100%) / 🍀 실패 시 30% 확률로 성공</p>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+
+          <div class="flow-step">
+            <div class="flow-number">3</div>
+            <div class="flow-content">
+              <h4>사망 → 실패 변환 체크</h4>
+              <p>💫 사망 1회 방지 (100%) / 🔰 사망 시 50% 확률로 방어</p>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+
+          <div class="flow-step">
+            <div class="flow-number">4</div>
+            <div class="flow-content">
+              <h4>최종 결과 처리</h4>
+              <p>성공: ⚡ 2레벨 상승 체크 / 사망: 📈 레벨 유지, 🎰 잭팟 2배, 🛡️ 지원금 2배 체크</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="section">
         <h2>✨ 특수 능력 목록</h2>
 
@@ -589,6 +751,69 @@
 
     <!-- 직업 탭 -->
     <div id="jobs" class="tab-content">
+      <!-- 직업 시스템 설명 -->
+      <div class="section">
+        <h2>📋 직업 시스템</h2>
+
+        <div class="system-grid">
+          <div class="system-card">
+            <h3>💰 직업 보너스</h3>
+            <p>직업 등급에 따라 판매가에 추가 보너스가 붙습니다.</p>
+            <ul class="system-list">
+              <li><span class="grade-badge grade-animal">동물</span> +80%</li>
+              <li><span class="grade-badge grade-legendary">전설</span> +60%</li>
+              <li><span class="grade-badge grade-rare">희귀</span> +30%</li>
+              <li><span class="grade-badge grade-uncommon">고급</span> +15%</li>
+              <li><span class="grade-badge grade-common">일반</span> +0%</li>
+            </ul>
+          </div>
+
+          <div class="system-card">
+            <h3>🔄 직업 변경</h3>
+            <p>강화 성공 시 <strong>15% 확률</strong>로 직업이 랜덤 변경됩니다.</p>
+            <div class="warning-box">
+              <strong>⚠️ 주의:</strong> 동물 직업은 직업 변경이 불가합니다!
+            </div>
+          </div>
+
+          <div class="system-card">
+            <h3>📉 직업 상실</h3>
+            <p>강화 실패 시 <strong>3% 확률</strong>로 직업을 잃고 <span class="highlight">백수</span>가 됩니다.</p>
+            <p class="sub-text">직업별로 다양한 해고 메시지가 출력됩니다.</p>
+          </div>
+
+          <div class="system-card">
+            <h3>🌟 특수 엔딩</h3>
+            <p>사망 시 특정 조건을 만족하면 <span class="highlight">다음 직업이 확정</span>됩니다.</p>
+            <p class="sub-text">아래 특수 엔딩 표에서 자세한 조건 확인!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 레벨 접두사 -->
+      <div class="section">
+        <h2>🎖️ 레벨별 직업 수식어</h2>
+        <p style="margin-bottom: 15px; color: rgba(255,255,255,0.7);">레벨에 따라 직업명 앞에 수식어가 붙습니다.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>레벨</th>
+              <th>수식어</th>
+              <th>예시</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>0강</td><td>수습</td><td>수습 개발자</td></tr>
+            <tr><td>1~3강</td><td>견습</td><td>견습 개발자</td></tr>
+            <tr><td>4~6강</td><td>(없음)</td><td>개발자</td></tr>
+            <tr><td>7~9강</td><td>숙련</td><td>숙련 개발자</td></tr>
+            <tr><td>10~12강</td><td>베테랑</td><td>베테랑 개발자</td></tr>
+            <tr><td>13~14강</td><td>마스터</td><td>마스터 개발자</td></tr>
+            <tr><td>15강+</td><td>그랜드마스터</td><td>그랜드마스터 개발자</td></tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="section">
         <h2>💼 직업 목록</h2>
 
@@ -597,20 +822,67 @@
           <div class="grade-title">
             <span class="grade-badge grade-animal">🐾 동물</span>
             <span class="prob-badge">0.5%</span>
-            <span>+80% 판매가 보너스 | 직업 변경 불가</span>
+            <span>+80% 판매가 보너스</span>
+          </div>
+          <div class="warning-box" style="margin-bottom: 15px;">
+            <strong>🔒 특수 효과:</strong> 동물 직업은 강화 성공 시 직업이 변경되지 않습니다! (영구 유지)
           </div>
           <div class="card-grid">
-            <div class="card"><div class="card-title">🐕 강아지</div></div>
-            <div class="card"><div class="card-title">🐱 고양이</div></div>
-            <div class="card"><div class="card-title">🐰 토끼</div></div>
-            <div class="card"><div class="card-title">🐹 햄스터</div></div>
-            <div class="card"><div class="card-title">🐧 펭귄</div></div>
-            <div class="card"><div class="card-title">🐼 판다</div></div>
-            <div class="card"><div class="card-title">🦊 여우</div></div>
-            <div class="card"><div class="card-title">🐻 곰</div></div>
-            <div class="card"><div class="card-title">🐺 늑대</div></div>
-            <div class="card"><div class="card-title">🦁 사자</div></div>
-            <div class="card"><div class="card-title">🦎 도마뱀</div></div>
+            <div class="card">
+              <div class="card-title">🐕 강아지</div>
+              <div class="card-info">💖 충성스러운 친구</div>
+              <div class="card-ability">💀 사망 시 25%: 기사</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🐱 고양이</div>
+              <div class="card-info">😺 도도한 집사님</div>
+              <div class="card-ability">💀 사망 시 30%: 희귀+</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🐰 토끼</div>
+              <div class="card-info">🥕 당근 러버</div>
+              <div class="card-ability">💀 사망 시 20%: 모험가</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🐹 햄스터</div>
+              <div class="card-info">🌻 쳇바퀴 마스터</div>
+              <div class="card-ability">💀 사망 시 20%: 연구원</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🐧 펭귄</div>
+              <div class="card-info">❄️ 남극의 신사</div>
+              <div class="card-ability">💀 사망 시 25%: 현자</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🐼 판다</div>
+              <div class="card-info">🎋 대나무 전문가</div>
+              <div class="card-ability">💀 사망 시 25%: 배우</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🦊 여우</div>
+              <div class="card-info">🌙 영리한 사냥꾼</div>
+              <div class="card-ability">💀 사망 시 35%: 대마법사</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🐻 곰</div>
+              <div class="card-info">🍯 꿀 마니아</div>
+              <div class="card-ability">💀 사망 시 20%: 전사</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🐺 늑대</div>
+              <div class="card-info">🌕 외로운 늑대</div>
+              <div class="card-ability">💀 사망 시 25%: 용병</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🦁 사자</div>
+              <div class="card-info">👑 백수의 왕</div>
+              <div class="card-ability" style="background: rgba(255,215,0,0.3);">💀 사망 시 20%: 대부호</div>
+            </div>
+            <div class="card">
+              <div class="card-title">🦎 도마뱀</div>
+              <div class="card-info">☀️ 일광욕 전문</div>
+              <div class="card-ability">💀 사망 시 30%: 연금술사</div>
+            </div>
           </div>
         </div>
 
@@ -703,6 +975,113 @@
             <div class="card"><div class="card-title">점원</div></div>
           </div>
         </div>
+      </div>
+
+      <!-- 특수 엔딩 시스템 -->
+      <div class="section">
+        <h2>🌟 특수 엔딩 시스템</h2>
+        <p style="margin-bottom: 15px; color: rgba(255,255,255,0.7);">사망 시 특정 조건에 따라 다음 인간의 직업이 확정되는 이벤트입니다.</p>
+
+        <h3 style="margin: 20px 0 15px; color: #ffd700;">🐾 동물 직업 사망 시 특수 엔딩</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>동물</th>
+              <th>확률</th>
+              <th>다음 직업</th>
+              <th>설명</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>🐕 강아지</td><td>25%</td><td>기사</td><td>충성심이 기사도로 승화!</td></tr>
+            <tr><td>🐱 고양이</td><td>30%</td><td>랜덤 희귀+</td><td>9개의 목숨 중 하나 사용</td></tr>
+            <tr><td>🐰 토끼</td><td>20%</td><td>모험가</td><td>빠른 발로 다음 생으로!</td></tr>
+            <tr><td>🐹 햄스터</td><td>20%</td><td>연구원</td><td>쳇바퀴 속 우주의 진리</td></tr>
+            <tr><td>🐧 펭귄</td><td>25%</td><td>현자</td><td>남극의 신비를 품고</td></tr>
+            <tr><td>🐼 판다</td><td>25%</td><td>배우</td><td>타고난 스타성!</td></tr>
+            <tr><td>🦊 여우</td><td>35%</td><td>대마법사</td><td>구미호로 진화!</td></tr>
+            <tr><td>🐻 곰</td><td>20%</td><td>전사</td><td>야생의 힘!</td></tr>
+            <tr><td>🐺 늑대</td><td>25%</td><td>용병</td><td>무리의 본능</td></tr>
+            <tr><td style="color: #ffd700;">🦁 사자</td><td style="color: #ffd700;">20%</td><td style="color: #ffd700;">대부호</td><td style="color: #ffd700;">왕은 어디서든 왕!</td></tr>
+            <tr><td>🦎 도마뱀</td><td>30%</td><td>연금술사</td><td>재생의 비밀</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin: 25px 0 15px; color: #a855f7;">⚔️ 직업 기반 특수 엔딩</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>조건</th>
+              <th>확률</th>
+              <th>다음 직업</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>마법사 + 7강↑</td><td>30%</td><td>대마법사</td></tr>
+            <tr><td>전사 + 10강↑</td><td>25%</td><td>용사</td></tr>
+            <tr><td>궁수 + 10강↑</td><td>20%</td><td>드래곤슬레이어</td></tr>
+            <tr><td>기사 + 5강↑</td><td>20%</td><td>용사</td></tr>
+            <tr><td>의사 + 10강↑</td><td>25%</td><td>연금술사</td></tr>
+            <tr><td>개발자</td><td>30%</td><td>프로게이머</td></tr>
+            <tr><td>요리사 + 10강↑</td><td>15%</td><td>연금술사</td></tr>
+            <tr><td>백수</td><td>10%</td><td>랜덤 희귀+</td></tr>
+            <tr><td>알바생 + 10강↑</td><td>25%</td><td>사업가</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin: 25px 0 15px; color: #3b82f6;">🏷️ 칭호/레벨 기반 특수 엔딩</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>조건</th>
+              <th>확률</th>
+              <th>다음 직업</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>🌟 전설 칭호</td><td>50%</td><td>랜덤 전설 직업</td></tr>
+            <tr><td>불굴의 칭호</td><td>40%</td><td>용사</td></tr>
+            <tr><td>행운의 칭호</td><td>12%</td><td>대부호</td></tr>
+            <tr><td>13강↑ 사망</td><td>30%</td><td>이전 직업 유지</td></tr>
+            <tr><td>10~12강 사망</td><td>20%</td><td>랜덤 희귀+</td></tr>
+            <tr><td>0강 사망</td><td>15%</td><td>랜덤 희귀+</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin: 25px 0 15px; color: #22c55e;">🎲 랜덤 특수 엔딩 (조건 없음)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>이벤트</th>
+              <th>확률</th>
+              <th>다음 직업</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>✨ 이세계 전이</td><td>3%</td><td>용사</td></tr>
+            <tr><td>🙏 신의 부름</td><td>2%</td><td>현자</td></tr>
+            <tr><td>🌑 어둠의 각성</td><td>2%</td><td>암살자</td></tr>
+            <tr><td>💰 황금빛 기운</td><td>1%</td><td>대부호</td></tr>
+            <tr><td>🐉 용의 피 각성</td><td>0.5%</td><td>드래곤슬레이어</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin: 25px 0 15px; color: #ef4444;">💀 마일스톤 (사망 횟수)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>조건</th>
+              <th>확률</th>
+              <th>보상</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>첫 사망</td><td>100%</td><td>랜덤 희귀+ 직업</td></tr>
+            <tr><td>10번째 사망</td><td>100%</td><td>랜덤 희귀+ 직업</td></tr>
+            <tr><td>50번째 사망</td><td>100%</td><td>전설 칭호 부여!</td></tr>
+            <tr><td>100번째 사망</td><td>100%</td><td>랜덤 전설 직업</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
