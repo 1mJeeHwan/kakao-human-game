@@ -15,6 +15,7 @@ const {
   getUpdates,
   getStats,
   getHelp,
+  getContact,
   getAchievementsView
 } = require('../controllers/gameController');
 
@@ -44,6 +45,9 @@ router.post('/stats', getStats);
 
 // 도움말 (챗봇)
 router.post('/help', getHelp);
+
+// 문의/건의 (챗봇)
+router.post('/contact', getContact);
 
 // 업적 조회
 router.post('/achievements', getAchievementsView);

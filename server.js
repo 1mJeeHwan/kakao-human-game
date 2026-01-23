@@ -5,6 +5,17 @@
 
 require('dotenv').config();
 
+// Sentry 에러 모니터링 (환경변수 설정 시 활성화)
+const Sentry = process.env.SENTRY_DSN ? require('@sentry/node') : null;
+if (Sentry) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'production',
+    tracesSampleRate: 0.1,  // 10% 샘플링
+  });
+  console.log('✅ Sentry 에러 모니터링 활성화');
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -13,6 +24,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const { connectDatabase } = require('./config/database');
 const gameRoutes = require('./routes/game');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,6 +106,9 @@ app.set('trust proxy', 1);
 // 게임 API 라우트 (Rate Limiting 적용)
 app.use('/game', apiLimiter, gameRoutes);
 
+// 관리자 API 라우트 (Rate Limiting 없음)
+app.use('/admin', adminRoutes);
+
 // 404 핸들러
 app.use((req, res) => {
   res.status(404).json({
@@ -105,6 +120,12 @@ app.use((req, res) => {
 // 에러 핸들러
 app.use((err, req, res, next) => {
   console.error('서버 오류:', err);
+
+  // Sentry로 에러 전송
+  if (Sentry) {
+    Sentry.captureException(err);
+  }
+
   res.status(500).json({
     error: 'Internal Server Error',
     message: '서버 오류가 발생했습니다.'

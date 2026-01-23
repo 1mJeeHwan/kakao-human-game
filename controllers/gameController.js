@@ -44,7 +44,7 @@ const userCooldowns = new Map();
 const userRequestHistory = new Map();
 
 // 설정
-const COOLDOWN_MS = 1000;           // 강화 쿨다운: 1초
+const COOLDOWN_MS = 500;            // 강화 쿨다운: 0.5초
 const ANOMALY_WINDOW_MS = 60000;    // 이상 감지 윈도우: 1분
 const ANOMALY_THRESHOLD = 60;       // 1분에 60회 이상 시 이상 감지
 const FLAGGED_USERS = new Set();    // 플래그된 유저 목록
@@ -1065,6 +1065,42 @@ async function getHelp(req, res) {
 }
 
 /**
+ * 문의/건의
+ */
+async function getContact(req, res) {
+  try {
+    const text = `📬 문의 및 건의
+━━━━━━━━━━━━━━━━━━
+
+🎮 게임 관련 문의
+━━━━━━━━━━━━━━
+• 버그 신고
+• 건의 사항
+• 기타 문의
+
+📧 연락처
+━━━━━━━━━━━━━━
+• 카카오톡: @인간키우기
+• 이메일: game@example.com
+• GitHub: github.com/1mJeeHwan/kakao-human-game
+
+⚠️ 주의사항
+━━━━━━━━━━━━━━
+• 비정상 플레이 시 제재될 수 있습니다
+• 데이터 복구 요청은 증빙이 필요합니다
+
+━━━━━━━━━━━━━━━━━━
+💡 빠른 답변을 위해 유저ID를 함께 알려주세요!`;
+
+    return res.json(createKakaoResponse(text, DEFAULT_QUICK_REPLIES));
+
+  } catch (error) {
+    console.error('getContact 오류:', error);
+    return res.json(createKakaoResponse('오류가 발생했습니다. 다시 시도해주세요.'));
+  }
+}
+
+/**
  * 업적 조회
  */
 async function getAchievementsView(req, res) {
@@ -1170,7 +1206,12 @@ module.exports = {
   getUpdates,
   getStats,
   getHelp,
+  getContact,
   getAchievementsView,
   processAchievements,
-  formatNewAchievements
+  formatNewAchievements,
+  // 봇 방지 시스템 (관리자용)
+  FLAGGED_USERS,
+  userCooldowns,
+  userRequestHistory
 };

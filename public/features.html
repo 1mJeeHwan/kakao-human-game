@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>인간 키우기 - 기술 스택 & 기능</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #e0e0e0;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 28px;
+      color: #fff;
+    }
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 30px;
+    }
+    h2 {
+      margin: 25px 0 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+      color: #fff;
+      font-size: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .card h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    th {
+      background: rgba(102, 126, 234, 0.2);
+      font-weight: 600;
+      color: #fff;
+    }
+    tr:hover { background: rgba(255,255,255,0.03); }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .badge-blue { background: #3b82f6; color: white; }
+    .badge-green { background: #22c55e; color: white; }
+    .badge-yellow { background: #f59e0b; color: black; }
+    .badge-purple { background: #a855f7; color: white; }
+    .badge-red { background: #ef4444; color: white; }
+    .badge-gray { background: #6b7280; color: white; }
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .feature-item {
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .feature-item h4 {
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .feature-item p {
+      color: #888;
+      font-size: 14px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .stat-item {
+      background: rgba(102, 126, 234, 0.15);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #667eea;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+    .api-endpoint {
+      font-family: monospace;
+      background: rgba(0,0,0,0.3);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .nav-links {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .nav-links a {
+      color: #667eea;
+      margin: 0 10px;
+      text-decoration: none;
+    }
+    .nav-links a:hover { text-decoration: underline; }
+    .version-tag {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 14px;
+      color: white;
+    }
+    code {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .update-log {
+      border-left: 3px solid #667eea;
+      padding-left: 15px;
+      margin: 10px 0;
+    }
+    .update-log .date {
+      color: #667eea;
+      font-weight: bold;
+    }
+    @media (max-width: 600px) {
+      th, td { padding: 8px 6px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>인간 키우기 - 기술 문서</h1>
+    <p class="subtitle">카카오톡 챗봇 기반 방치형 육성 게임 <span class="version-tag">v1.5.0</span></p>
+
+    <div class="nav-links">
+      <a href="/guide.html">게임 가이드</a> |
+      <a href="/game/info">게임 정보</a> |
+      <a href="/features.html">기술 문서</a> |
+      <a href="https://github.com/1mJeeHwan/kakao-human-game">GitHub</a>
+    </div>
+
+    <!-- 기술 스택 -->
+    <div class="card">
+      <h3>기술 스택</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>기술</th>
+            <th>버전/설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-green">Runtime</span></td>
+            <td>Node.js</td>
+            <td>18+ LTS</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">Framework</span></td>
+            <td>Express.js</td>
+            <td>4.18</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-purple">Database</span></td>
+            <td>MongoDB</td>
+            <td>Mongoose 8.0 ODM</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-yellow">Platform</span></td>
+            <td>카카오 오픈빌더</td>
+            <td>챗봇 스킬 서버</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-gray">Hosting</span></td>
+            <td>Render.com</td>
+            <td>무료 티어</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">Monitoring</span></td>
+            <td>Sentry</td>
+            <td>에러 추적 (선택)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 보안 & 최적화 -->
+    <div class="card">
+      <h3>보안 & 최적화</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <h4>Helmet.js</h4>
+          <p>HTTP 보안 헤더 자동 설정 (XSS, CSP 등)</p>
+        </div>
+        <div class="feature-item">
+          <h4>Rate Limiting</h4>
+          <p>IP 기반 요청 제한 (1초 10회)</p>
+        </div>
+        <div class="feature-item">
+          <h4>유저별 쿨다운</h4>
+          <p>강화 요청 간 0.5초 간격 강제</p>
+        </div>
+        <div class="feature-item">
+          <h4>이상 감지</h4>
+          <p>분당 60회 이상 요청 시 자동 차단</p>
+        </div>
+        <div class="feature-item">
+          <h4>Compression</h4>
+          <p>응답 Gzip 압축 (대역폭 절감)</p>
+        </div>
+        <div class="feature-item">
+          <h4>이미지 최적화</h4>
+          <p>PNG → WebP 변환 (90% 용량 절감)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- API 엔드포인트 -->
+    <div class="card">
+      <h3>API 엔드포인트</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>메서드</th>
+            <th>경로</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/game/start</code></td>
+            <td>게임 시작 / 상태 조회</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/game/upgrade</code></td>
+            <td>인간 강화</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/game/sell</code></td>
+            <td>인간 판매</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/game/rates</code></td>
+            <td>강화 확률표</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/game/collection</code></td>
+            <td>도감 조회</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/game/achievements</code></td>
+            <td>업적 조회</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/game/contact</code></td>
+            <td>문의/건의</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">GET</span></td>
+            <td><code>/health</code></td>
+            <td>서버 상태 체크</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 관리자 API -->
+    <div class="card">
+      <h3>관리자 API</h3>
+      <p style="color: #888; margin-bottom: 15px;">인증: <code>X-Admin-Key</code> 헤더 또는 <code>adminKey</code> 파라미터 필요</p>
+      <table>
+        <thead>
+          <tr>
+            <th>메서드</th>
+            <th>경로</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-blue">GET</span></td>
+            <td><code>/admin/status</code></td>
+            <td>서버 상태 + 봇 방지 현황</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">GET</span></td>
+            <td><code>/admin/flagged</code></td>
+            <td>플래그된 유저 목록</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/admin/unflag/:userId</code></td>
+            <td>유저 플래그 해제</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/admin/unflag-all</code></td>
+            <td>모든 플래그 초기화</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">GET</span></td>
+            <td><code>/admin/user/:id</code></td>
+            <td>유저 정보 조회</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">POST</span></td>
+            <td><code>/admin/give-gold</code></td>
+            <td>골드 지급</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">GET</span></td>
+            <td><code>/admin/stats</code></td>
+            <td>통계 대시보드</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 게임 시스템 -->
+    <div class="card">
+      <h3>게임 시스템</h3>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-value">20</div>
+          <div class="stat-label">최대 레벨</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">45+</div>
+          <div class="stat-label">칭호 수</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">46+</div>
+          <div class="stat-label">직업 수</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">11</div>
+          <div class="stat-label">특수 능력</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">30+</div>
+          <div class="stat-label">특수 엔딩</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">20+</div>
+          <div class="stat-label">업적</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 외부 서비스 연동 -->
+    <div class="card">
+      <h3>외부 서비스 연동</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>서비스</th>
+            <th>용도</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Sentry</td>
+            <td>에러 모니터링 / 알림</td>
+            <td><span class="badge badge-green">선택</span> <code>SENTRY_DSN</code> 환경변수</td>
+          </tr>
+          <tr>
+            <td>UptimeRobot</td>
+            <td>서버 다운 알림</td>
+            <td><span class="badge badge-green">권장</span> 무료 50개 모니터</td>
+          </tr>
+          <tr>
+            <td>MongoDB Atlas</td>
+            <td>클라우드 데이터베이스</td>
+            <td><span class="badge badge-blue">사용중</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 업데이트 로그 -->
+    <div class="card">
+      <h3>업데이트 로그</h3>
+
+      <div class="update-log">
+        <p class="date">v1.5.0 - 2025.01.24</p>
+        <ul>
+          <li>봇 방지 시스템 (유저별 쿨다운 0.5초, 이상 감지)</li>
+          <li>관리자 API 추가 (플래그 해제, 골드 지급, 통계)</li>
+          <li>Sentry 에러 모니터링 연동</li>
+          <li>문의 명령어 추가</li>
+          <li>이미지 WebP 최적화 (90% 용량 절감)</li>
+        </ul>
+      </div>
+
+      <div class="update-log">
+        <p class="date">v1.4.0 - 2025.01.23</p>
+        <ul>
+          <li>다중 능력 시스템</li>
+          <li>웹 가이드 페이지</li>
+          <li>특수 엔딩 시스템</li>
+        </ul>
+      </div>
+
+      <div class="update-log">
+        <p class="date">v1.3.0 - 2025.01.22</p>
+        <ul>
+          <li>동물 직업 추가</li>
+          <li>직업별 사망 메시지</li>
+        </ul>
+      </div>
+
+      <div class="update-log">
+        <p class="date">v1.2.0 - 2025.01.21</p>
+        <ul>
+          <li>도감 시스템</li>
+          <li>업적 시스템</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 환경 변수 -->
+    <div class="card">
+      <h3>환경 변수</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>변수명</th>
+            <th>설명</th>
+            <th>필수</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>PORT</code></td>
+            <td>서버 포트 (기본: 3000)</td>
+            <td>선택</td>
+          </tr>
+          <tr>
+            <td><code>MONGODB_URI</code></td>
+            <td>MongoDB 연결 문자열</td>
+            <td><span class="badge badge-red">필수</span></td>
+          </tr>
+          <tr>
+            <td><code>NODE_ENV</code></td>
+            <td>환경 (production/development)</td>
+            <td>선택</td>
+          </tr>
+          <tr>
+            <td><code>ADMIN_KEY</code></td>
+            <td>관리자 API 인증 키</td>
+            <td><span class="badge badge-yellow">권장</span></td>
+          </tr>
+          <tr>
+            <td><code>SENTRY_DSN</code></td>
+            <td>Sentry 에러 모니터링 DSN</td>
+            <td>선택</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; color: #666;">
+      <p>Made with by JiHwan - 2025</p>
+    </div>
+  </div>
+</body>
+</html>
